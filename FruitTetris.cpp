@@ -86,8 +86,14 @@ GLuint vboIDs[6]; // Two Vertex Buffer Objects for each VAO (specifying vertex p
 //-------------------------------------------------------------------------------------------------------------------
 
 // When the current tile is moved or rotated (or created), update the VBO containing its vertex position data
+void settile();
 void updatetile()
 {
+	if (tilepos.y <= 0)
+	{
+		settile();
+		return;
+	}
 	// Bind the VBO containing current tile vertex positions
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]); 
 	if (last_x[0] > 0)
@@ -125,6 +131,7 @@ void updatetile()
 //-------------------------------------------------------------------------------------------------------------------
 
 // Called at the start of play and every time a tile is placed
+vec4 newcolours[24];
 void newtile()
 {
 	tilepos = vec2(5 , 19); // Put the tile at the top of the board
@@ -137,7 +144,7 @@ void newtile()
 	updatetile(); 
 
 	// Update the color VBO of current tile
-	vec4 newcolours[24];
+
 	for (int i = 0; i < 4; i++)
 	{
 		int c = rand() % 5;
@@ -323,7 +330,21 @@ void checkfullrow(int row)
 // Places the current tile - update the board vertex colour VBO and the array maintaining occupied cells
 void settile()
 {
-	
+	for (int i = 0; i < 4; i++) // set boardcolor as shape's color
+	{
+		GLfloat x = tilepos.x + tile[i].x;
+		GLfloat y = tilepos.y + tile[i].y;
+		cout <<"x: " <<x<<endl;
+		cout <<"y: "<<y<<endl;
+		int index = (x + y * 10) * 6;
+		cout <<index <<endl;
+		for (int j = index; j < index + 6; j++)
+			boardcolours[j] = newcolours[i * 6];
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]); // Bind the VBO containing current tile vertex colours
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(boardcolours), boardcolours); // Put the colour data in the VBO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	newtile();
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -347,7 +368,6 @@ void restart()
 void display()
 {
 	count ++;
-	cout <<count<<endl;
 	if (count > 50)
 	{
 		count = 0;
@@ -451,6 +471,7 @@ int main(int argc, char **argv)
 	glutSpecialFunc(special);
 	glutKeyboardFunc(keyboard);
 	glutIdleFunc(idle);
+
 	glutMainLoop(); // Start main loop
 	return 0;
 }
