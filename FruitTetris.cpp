@@ -111,24 +111,9 @@ int updatetile()
 {
 	if (end)
 		return 0;
-
 	// Bind the VBO containing current tile vertex positions
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]); 
-	if (!flag)
-	{
-		for (int i = 0; i < 4; i++)
-		{
-			cout << flag <<endl;
-			GLfloat x = tilepos.x + tile[i].x;
-			GLfloat y = tilepos.y + tile[i].y;
-			if (board[(int)x][(int)y] == true)
-			{
-				end = true;
-				return -1;
-			}
-		}
-	}
-	else 
+	if (flag)
 		for (int i = 0; i < 4; i++)
 			board[(int)last_pos[i].x][(int)last_pos[i].y] = false;
 	for (int i = 0; i < 4; i++)
@@ -213,21 +198,31 @@ void newtile()
 	// Update the geometry VBO of current tile
 	for (int i = 0; i < 4; i++)
 		tile[i] = allRotationsLshape[cur_index][i]; // Get the 4 pieces of the new tile
-	updatetile();
-
-	// Update the color VBO of current tile
-
 	for (int i = 0; i < 4; i++)
 	{
-		int c = rand() % 5;
-		for (int j = i * 6; j < (i + 1) * 6; j++)
-			newcolours[j] = color[c]; 
+		GLfloat x = tilepos.x + tile[i].x;
+		GLfloat y = tilepos.y + tile[i].y;
+		if (board[(int)x][(int)y] == true)
+			end = true;
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	if (!end)
+	{
+		updatetile();
 
-	glBindVertexArray(0);
+		// Update the color VBO of current tile
+
+		for (int i = 0; i < 4; i++)
+		{
+			int c = rand() % 5;
+			for (int j = i * 6; j < (i + 1) * 6; j++)
+				newcolours[j] = color[c]; 
+		}
+		glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glBindVertexArray(0);
+	}
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -503,6 +498,28 @@ void reshape(GLsizei w, GLsizei h)
 // Handle arrow key keypresses
 void special(int key, int x, int y)
 {
+	switch(key) 
+	{
+		case GLUT_KEY_UP:
+			rotate();
+			last_tile = tilepos;
+			break;
+		case GLUT_KEY_LEFT:
+			tilepos.x --;
+			updatetile();
+			last_tile = tilepos;
+			break;
+		case GLUT_KEY_DOWN:
+			tilepos.y --;
+			updatetile();
+			last_tile = tilepos;
+			break;
+		case GLUT_KEY_RIGHT:
+			tilepos.x ++;
+			updatetile();
+			last_tile = tilepos;
+			break;
+	}
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -520,25 +537,6 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'r': // 'r' key restarts the game
 			restart();
-			break;
-		case 'w':
-			rotate();
-			last_tile = tilepos;
-			break;
-		case 'a':
-			tilepos.x --;
-			updatetile();
-			last_tile = tilepos;
-			break;
-		case 's':
-			tilepos.y --;
-			updatetile();
-			last_tile = tilepos;
-			break;
-		case 'd':
-			tilepos.x ++;
-			updatetile();
-			last_tile = tilepos;
 			break;
 	}
 	glutPostRedisplay();
