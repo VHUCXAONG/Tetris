@@ -487,7 +487,7 @@ void CheckRemove()
 				CheckRemove();
 				return;
 			}
-			if (CheckSameColor(i, j, j - 1, j + 1) && CheckSameColor(i, j, i + 1, j - 1))
+			if (CheckSameColor(i, j, i - 1, j + 1) && CheckSameColor(i, j, i + 1, j - 1))
 			{
 				cout << 3 <<endl;
 				Remove(i, j);
