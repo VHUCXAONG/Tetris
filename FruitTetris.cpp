@@ -108,6 +108,36 @@ GLuint vboIDs[6]; // Two Vertex Buffer Objects for each VAO (specifying vertex p
 void settile();
 void newtile();
 void Remove(int x, int y);
+void DrawLast()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]);
+	for (int i = 0; i < 4; i++) 
+	{
+
+		// Calculate the grid coordinates of the cell
+		GLfloat x = tilepos.x + tile[i].x;
+		last_pos[i].x = x;
+		GLfloat y = tilepos.y + tile[i].y;
+		last_pos[i].y = y;
+		board[(int)x][(int)y] = true;
+		// Create the 4 corners of the square - these vertices are using location in pixels
+		// These vertices are later converted by the vertex shader
+		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), .4, 1); 
+		vec4 p2 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), .4, 1);
+		vec4 p3 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), .4, 1);
+		vec4 p4 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), .4, 1);
+
+		// Two points are used by two triangles each
+		vec4 newpoints[6] = {p1, p2, p3, p2, p3, p4}; 
+
+		// Put new data in the VBO
+		glBufferSubData(GL_ARRAY_BUFFER, i*6*sizeof(vec4), 6*sizeof(vec4), newpoints); 
+	}
+
+	glBindVertexArray(0);
+	
+}
+
 int updatetile()
 {
 	if (end)
@@ -189,7 +219,6 @@ vec3 GetTop(int index)
 vec4 newcolours[24];
 void newtile()
 {
-	srand(time(0));
 	mode = rand() % mode_type;//get random shape
 	cur_index = mode * 4 + rand()%4; 
 	vec3 max = GetTop(cur_index);
@@ -207,11 +236,10 @@ void newtile()
 			end = true;
 	}
 	if (!end)
-	{
 		updatetile();
-
+	else
+		DrawLast();
 		// Update the color VBO of current tile
-
 		for (int i = 0; i < 4; i++)
 		{
 			int c = rand() % 5;
@@ -223,7 +251,6 @@ void newtile()
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		glBindVertexArray(0);
-	}
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -337,6 +364,7 @@ void initCurrentTile()
 
 void init()
 {
+	srand(time(0));
 	// Load shaders and use the shader program
 	GLuint program = InitShader("vshader.glsl", "fshader.glsl");
 	glUseProgram(program);
@@ -411,14 +439,15 @@ void rotate()
 
 // Checks if the specified row (0 is the bottom 19 the top) is full
 // If every cell in the row is occupied, it will clear that cell and everything above it will shift down one row
-void checkfullrow(int row)
+int checkfullrow(int row)
 {
 	for (int i = 0; i < 10; i++)
 		if (board[i][row] == false)
-			return;
+			return 0;
 	for (int i = 0; i < 10; i++)
 		Remove(i, row);
-	cout <<5<<endl;
+	//cout <<5<<endl;
+	return 1;
 }
 
 
@@ -466,14 +495,17 @@ void Remove(int x, int y)
 void CheckRemove()
 {
 	for (int i = 0; i < 20; i ++)
-		checkfullrow(i);
+	{
+		if (checkfullrow(i))
+			i--;
+	}
 
 	for (int i = 0; i < 10; i++)
 		for (int j = 0; j < 20; j++)
 		{
 			if (CheckSameColor(i, j, i - 1, j) && CheckSameColor(i, j, i + 1, j))
 			{
-				cout << 1 <<endl;
+				//cout << 1 <<endl;
 				Remove(i, j);
 				Remove(i - 1, j);
 				Remove(i + 1, j);
@@ -482,14 +514,14 @@ void CheckRemove()
 			}
 			if (CheckSameColor(i, j, i, j - 1) && CheckSameColor(i, j, i, j + 1))
 			{
-				cout << 2 <<endl;
+				//cout << 2 <<endl;
 				RemoveCol(i, j - 1);
 				CheckRemove();
 				return;
 			}
 			if (CheckSameColor(i, j, i - 1, j + 1) && CheckSameColor(i, j, i + 1, j - 1))
 			{
-				cout << 3 <<endl;
+				//cout << 3 <<endl;
 				Remove(i, j);
 				Remove(i - 1, j + 1);
 				Remove(i + 1, j - 1);
@@ -498,7 +530,7 @@ void CheckRemove()
 			}
 			if (CheckSameColor(i, j, i + 1, j + 1) && CheckSameColor(i, j, i - 1, j - 1))
 			{
-				cout << 4 <<endl;
+				//cout << 4 <<endl;
 				Remove(i, j);
 				Remove(i + 1, j + 1);
 				Remove(i - 1, j - 1);
