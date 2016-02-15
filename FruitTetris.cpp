@@ -107,6 +107,7 @@ GLuint vboIDs[6]; // Two Vertex Buffer Objects for each VAO (specifying vertex p
 // When the current tile is moved or rotated (or created), update the VBO containing its vertex position data
 void settile();
 void newtile();
+void Remove(int x, int y);
 int updatetile()
 {
 	if (end)
@@ -412,11 +413,101 @@ void rotate()
 // If every cell in the row is occupied, it will clear that cell and everything above it will shift down one row
 void checkfullrow(int row)
 {
-
+	for (int i = 0; i < 10; i++)
+		if (board[i][row] == false)
+			return;
+	for (int i = 0; i < 10; i++)
+		Remove(i, row);
+	cout <<5<<endl;
 }
 
-//-------------------------------------------------------------------------------------------------------------------
 
+bool CheckSameColor(int x1, int y1, int x2, int y2)
+{	
+	if (x2 < 0 || x2 > 9 || y2 < 0 || y2 > 19)
+		return false;
+	int x = x1 * 6 + y1 * 60;
+	int y = x2 * 6 + y2 * 60;
+	if (board[x1][y1] && board[x2][y2]&&
+		(abs(boardcolours[x].x - boardcolours[y].x) < 0.0001) && (abs(boardcolours[x].y - boardcolours[y].y) < 0.0001)&&
+		(abs(boardcolours[x].z - boardcolours[y].z) < 0.0001) && (abs(boardcolours[x].w - boardcolours[y].w) < 0.0001))
+		return true;
+	return false;
+}
+
+void RemoveCol(int x, int y)
+{
+	y += 3;
+	while (board[x][y])
+	{
+		for (int i = 0; i < 6; i++)
+			boardcolours[x * 6 + y * 60 - 180 + i] = boardcolours[x * 6 + y * 60];
+		y++;
+	}
+	for (int i = y - 3; i < y; i++)
+	{
+		for (int j = 0; j < 6; j++)
+			boardcolours[x * 6 + i * 60 + j] = black;
+		board[x][i] = false;
+	}
+}
+void Remove(int x, int y)
+{
+	while (board[x][y])
+	{
+		for (int i = 0; i < 6; i++)
+			boardcolours[x * 6 + y * 60 + i] = boardcolours[x * 6 + y * 60 + 60];
+		y++;
+	}
+	y--;
+	board[x][y] = false;
+}
+//-------------------------------------------------------------------------------------------------------------------
+void CheckRemove()
+{
+	for (int i = 0; i < 20; i ++)
+		checkfullrow(i);
+
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < 20; j++)
+		{
+			if (CheckSameColor(i, j, i - 1, j) && CheckSameColor(i, j, i + 1, j))
+			{
+				cout << 1 <<endl;
+				Remove(i, j);
+				Remove(i - 1, j);
+				Remove(i + 1, j);
+				CheckRemove();
+				return;
+			}
+			if (CheckSameColor(i, j, i, j - 1) && CheckSameColor(i, j, i, j + 1))
+			{
+				cout << 2 <<endl;
+				RemoveCol(i, j - 1);
+				CheckRemove();
+				return;
+			}
+			if (CheckSameColor(i, j, j - 1, j + 1) && CheckSameColor(i, j, i + 1, j - 1))
+			{
+				cout << 3 <<endl;
+				Remove(i, j);
+				Remove(i - 1, j + 1);
+				Remove(i + 1, j - 1);
+				CheckRemove();
+				return;
+			}
+			if (CheckSameColor(i, j, i + 1, j + 1) && CheckSameColor(i, j, i - 1, j - 1))
+			{
+				cout << 4 <<endl;
+				Remove(i, j);
+				Remove(i + 1, j + 1);
+				Remove(i - 1, j - 1);
+				CheckRemove();
+				return;
+			}
+
+		}
+}
 // Places the current tile - update the board vertex colour VBO and the array maintaining occupied cells
 void settile()
 {
@@ -428,9 +519,10 @@ void settile()
 		for (int j = index; j < index + 6; j++)
 			boardcolours[j] = newcolours[i * 6];
 	}
+	CheckRemove();
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]); // Bind the VBO containing current tile vertex colours
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(boardcolours), boardcolours); // Put the colour data in the VBO
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);	
 	newtile();
 }
 
