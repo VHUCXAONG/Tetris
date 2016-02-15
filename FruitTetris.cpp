@@ -481,8 +481,8 @@ void RemoveCol(int x, int y)
 	}
 }
 void Remove(int x, int y)
-{
-	while (board[x][y])
+{	
+	while (board[x][y] && y < 20)
 	{
 		for (int i = 0; i < 6; i++)
 			boardcolours[x * 6 + y * 60 + i] = boardcolours[x * 6 + y * 60 + 60];
