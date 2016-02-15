@@ -25,6 +25,7 @@ int mode; //kinds of the rotating shapes
 int mode_type = 6;
 int cur_index;//current index in rotation vec
 int flag;
+bool end = false;
 
 vec2 last_pos[4] = {vec2(-1,-1),vec2(-1,-1),vec2(-1,-1),vec2(-1,-1)};
 vec2 last_tile;
@@ -71,7 +72,6 @@ vec2 allRotationsLshape[24][4] =
 	{vec2(0, 0), vec2(1, 0), vec2(0,-1), vec2(0,  1)}};
 
 
-
 // colors
 vec4 orange = vec4(1.0, 0.5, 0.0, 1.0); 
 vec4 purple = vec4(0.5, 0.0, 1.0, 1.0); 
@@ -109,36 +109,52 @@ void settile();
 void newtile();
 int updatetile()
 {
+	if (end)
+		return 0;
 
 	// Bind the VBO containing current tile vertex positions
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]); 
-	if (flag)
+	if (!flag)
+	{
 		for (int i = 0; i < 4; i++)
 		{
-			board[(int)last_pos[i].x][(int)last_pos[i].y] = false;
+			cout << flag <<endl;
+			GLfloat x = tilepos.x + tile[i].x;
+			GLfloat y = tilepos.y + tile[i].y;
+			if (board[(int)x][(int)y] == true)
+			{
+				end = true;
+				return -1;
+			}
 		}
+	}
+	else 
+		for (int i = 0; i < 4; i++)
+			board[(int)last_pos[i].x][(int)last_pos[i].y] = false;
 	for (int i = 0; i < 4; i++)
 	{
-		flag = 1;
 		GLfloat x = tilepos.x + tile[i].x;
 		GLfloat y = tilepos.y + tile[i].y;
-		if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0)
+		if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0)//collision happens
 		{
+			flag = 1;
 			for (int j = 0; j < 4; j++)
 			{
 				board[(int)last_pos[j].x][(int)last_pos[j].y] = true;
 			}
-			if (last_tile.y != tilepos.y)
+			if (last_tile.y != tilepos.y)//drop to the bottom, should create new tile
 			{
 				tilepos = last_tile;
 				settile();
 				return 1;
 			}
+			//can still drop down
 			tilepos = last_tile;
 			return 2;
 		}
 
 	}
+	flag = 1;
 	// For each of the 4 'cells' of the tile,
 	for (int i = 0; i < 4; i++) 
 	{
@@ -197,7 +213,7 @@ void newtile()
 	// Update the geometry VBO of current tile
 	for (int i = 0; i < 4; i++)
 		tile[i] = allRotationsLshape[cur_index][i]; // Get the 4 pieces of the new tile
-	updatetile(); 
+	updatetile();
 
 	// Update the color VBO of current tile
 
@@ -358,12 +374,34 @@ void init()
 // Check if it's able to rotate
 bool CheckRotate()
 {
-
+	int next = cur_index + 1;
+	vec2 next_tile[4];
+	if (next >= (mode + 1) * 4 )
+		next = mode * 4;
+	for (int i = 0; i < 4; i++)
+	{
+		board[(int)last_pos[i].x][(int)last_pos[i].y] = false;
+		next_tile[i] = allRotationsLshape[next][i];
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		GLfloat x = tilepos.x + next_tile[i].x;
+		GLfloat y = tilepos.y + next_tile[i].y;
+		if (board[(int)x][(int)y] == true || x < 0 || x > 9 ||y < 0 || y > 19)//collision happens
+		{
+			for (int j = 0; j < 4; j++)
+				board[(int)last_pos[i].x][(int)last_pos[i].y] = true;
+			return false;
+		}
+	}
+	return true;
 }
 
 // Rotates the current tile, if there is room
 void rotate()
 {
+	if (!CheckRotate())
+		return;
 	cur_index++;
 	if (cur_index >= (mode + 1) * 4 )
 		cur_index = mode * 4;
@@ -414,7 +452,8 @@ bool movetile(vec2 direction)
 // Starts the game over - empties the board, creates new tiles, resets line counters
 void restart()
 {
-
+	end = false;
+	init();	
 }
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -425,10 +464,8 @@ void display()
 	if (count > 50)
 	{
 		count = 0;
-
 		tilepos.y --;
-		if (updatetile() == 1)
-			newtile();
+		updatetile();
 		last_tile = tilepos;
 
 	}
@@ -495,8 +532,7 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 's':
 			tilepos.y --;
-			if (updatetile() == 1)
-				newtile();
+			updatetile();
 			last_tile = tilepos;
 			break;
 		case 'd':
