@@ -22,13 +22,12 @@ using namespace std;
 
 int count = 0;
 int mode; //kinds of the rotating shapes
-int up_mode[4] = {2, 2, 4, 4}; //max kinds of rotating shapes
-int start_index[4] = {0, 2, 4, 8}; //the start index of each shape in the rotation vec
-int end_index[4] = {1, 3, 7, 11}; //the end index of each shape in rotation vec
+int mode_type = 6;
 int cur_index;//current index in rotation vec
+int flag;
 
-int last_x[4] = {-1, -1, -1, -1};//last occupied grid x 
-int last_y[4] = {-1, -1, -1, -1};//last occupied grid y
+vec2 last_pos[4] = {vec2(-1,-1),vec2(-1,-1),vec2(-1,-1),vec2(-1,-1)};
+vec2 last_tile;
 // xsize and ysize represent the window size - updated if window is reshaped to prevent stretching of the game
 int xsize = 400; 
 int ysize = 720;
@@ -39,19 +38,39 @@ vec2 tilepos = vec2(5, 19); // The position of the current tile using grid coord
 
 // An array storing all possible orientations of all possible tiles
 // The 'tile' array will always be some element [i][j] of this array (an array of vec2)
-vec2 allRotationsLshape[12][4] = 
+vec2 allRotationsLshape[24][4] = 
+	//I
 	{{vec2(0,0), vec2(-2,0), vec2(1, 0), vec2(-1, 0)},
 	{vec2(0, 0), vec2(0,-2), vec2(0, 1), vec2(0, -1)},
+	{vec2(0, 0), vec2(2, 0), vec2(-1,0), vec2(1,  0)},
+	{vec2(0, 0), vec2(0, 2), vec2(0, -1), vec2(0, 1)},
+	//Right S
 	{vec2(0, 0), vec2(-1,-1), vec2(1, 0), vec2(0,-1)},
 	{vec2(0, 0), vec2(1,-1), vec2(0, 1), vec2(1,  0)},
+	{vec2(0, 0), vec2(1, 1), vec2(-1,0), vec2(0,  1)},
+	{vec2(0, 0), vec2(-1,1), vec2(0,-1), vec2(-1, 0)},
+	//Left L
 	{vec2(0, 0), vec2(-1,-1), vec2(1, 0), vec2(-1,0)},
-	{vec2(0, 0), vec2(1,-1), vec2(0, 1), vec2(0, -1)},     
+	{vec2(0, 0), vec2(1,-1), vec2(0, 1), vec2(0, -1)},
 	{vec2(0, 0), vec2(1, 1), vec2(-1,0), vec2(1,  0)},  
 	{vec2(0, 0), vec2(-1,1), vec2(0,-1), vec2(0,  1)},
+	//Left S
+	{vec2(0, 0), vec2(0,-1), vec2(-1,0), vec2(1, -1)},
+	{vec2(0, 0), vec2(1, 0), vec2(0,-1), vec2(1,  1)},
+	{vec2(0, 0), vec2(0, 1), vec2(1, 0), vec2(-1, 1)},
+	{vec2(0, 0), vec2(-1,0), vec2(0, 1), vec2(-1,-1)},
+	//Right L   
+	{vec2(0, 0), vec2(1,-1), vec2(-1,0), vec2(1,  0)},
+	{vec2(0, 0), vec2(1, 1), vec2(0,-1), vec2(0,  1)},
+	{vec2(0 ,0), vec2(-1,1), vec2(1, 0), vec2(-1, 0)},
+	{vec2(0, 0), vec2(-1,-1), vec2(0, 1), vec2(0,-1)},
+	//T
 	{vec2(0, 0), vec2(0, 1), vec2(-1,0), vec2(1,  0)},
 	{vec2(0, 0), vec2(-1,0), vec2(0, 1), vec2(0, -1)},
 	{vec2(0, 0), vec2(0,-1), vec2(-1,0), vec2(1,  0)},
 	{vec2(0, 0), vec2(1, 0), vec2(0,-1), vec2(0,  1)}};
+
+
 
 // colors
 vec4 orange = vec4(1.0, 0.5, 0.0, 1.0); 
@@ -87,30 +106,49 @@ GLuint vboIDs[6]; // Two Vertex Buffer Objects for each VAO (specifying vertex p
 
 // When the current tile is moved or rotated (or created), update the VBO containing its vertex position data
 void settile();
-void updatetile()
+void newtile();
+int updatetile()
 {
-	if (tilepos.y <= 0)
-	{
-		settile();
-		return;
-	}
+
 	// Bind the VBO containing current tile vertex positions
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]); 
-	if (last_x[0] > 0)
+	if (flag)
 		for (int i = 0; i < 4; i++)
 		{
-			board[last_x[i]][last_y[i]] = false;
+			board[(int)last_pos[i].x][(int)last_pos[i].y] = false;
 		}
+	for (int i = 0; i < 4; i++)
+	{
+		flag = 1;
+		GLfloat x = tilepos.x + tile[i].x;
+		GLfloat y = tilepos.y + tile[i].y;
+		if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				board[(int)last_pos[j].x][(int)last_pos[j].y] = true;
+			}
+			if (last_tile.y != tilepos.y)
+			{
+				tilepos = last_tile;
+				settile();
+				return 1;
+			}
+			tilepos = last_tile;
+			return 2;
+		}
+
+	}
 	// For each of the 4 'cells' of the tile,
 	for (int i = 0; i < 4; i++) 
 	{
 
 		// Calculate the grid coordinates of the cell
 		GLfloat x = tilepos.x + tile[i].x;
-		last_x[i] = (int)x;
+		last_pos[i].x = x;
 		GLfloat y = tilepos.y + tile[i].y;
-		last_y[i] = (int)y;
-		board[last_x[i]][last_y[i]] = true;
+		last_pos[i].y = y;
+		board[(int)x][(int)y] = true;
 		// Create the 4 corners of the square - these vertices are using location in pixels
 		// These vertices are later converted by the vertex shader
 		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), .4, 1); 
@@ -126,18 +164,36 @@ void updatetile()
 	}
 
 	glBindVertexArray(0);
+	return 0;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+vec3 GetTop(int index)
+{
+	vec3 re = vec3(0, 0, 0);
+	for (int i = 0; i < 4; i++)
+	{
+		if (allRotationsLshape[index][i].y > re.x)
+			re.x = allRotationsLshape[index][i].y;
+		if (allRotationsLshape[index][i].x < re.y)
+			re.y = allRotationsLshape[index][i].x;
+		if (allRotationsLshape[index][i].x > re.z)
+			re.z = allRotationsLshape[index][i].x;
+	}
+	return re;
+}
 
 // Called at the start of play and every time a tile is placed
 vec4 newcolours[24];
 void newtile()
 {
-	tilepos = vec2(5 , 19); // Put the tile at the top of the board
 	srand(time(0));
-	mode = rand()%4;//get random shape
-	cur_index = start_index[mode] + rand()%up_mode[mode]; 
+	mode = rand() % mode_type;//get random shape
+	cur_index = mode * 4 + rand()%4; 
+	vec3 max = GetTop(cur_index);
+	tilepos = vec2(rand() % 5 + 2, 19 - max.x);
+	last_tile = tilepos;
+	flag = 0;
 	// Update the geometry VBO of current tile
 	for (int i = 0; i < 4; i++)
 		tile[i] = allRotationsLshape[cur_index][i]; // Get the 4 pieces of the new tile
@@ -309,11 +365,12 @@ bool CheckRotate()
 void rotate()
 {
 	cur_index++;
-	if (cur_index > end_index[mode])
-		cur_index = start_index[mode];
+	if (cur_index >= (mode + 1) * 4 )
+		cur_index = mode * 4;
 	for (int i = 0; i < 4; i++)
 		tile[i] = allRotationsLshape[cur_index][i];
 	updatetile();
+	last_tile = tilepos;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -334,10 +391,7 @@ void settile()
 	{
 		GLfloat x = tilepos.x + tile[i].x;
 		GLfloat y = tilepos.y + tile[i].y;
-		cout <<"x: " <<x<<endl;
-		cout <<"y: "<<y<<endl;
 		int index = (x + y * 10) * 6;
-		cout <<index <<endl;
 		for (int j = index; j < index + 6; j++)
 			boardcolours[j] = newcolours[i * 6];
 	}
@@ -371,8 +425,12 @@ void display()
 	if (count > 50)
 	{
 		count = 0;
+
 		tilepos.y --;
-		updatetile();
+		if (updatetile() == 1)
+			newtile();
+		last_tile = tilepos;
+
 	}
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -428,18 +486,23 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'w':
 			rotate();
+			last_tile = tilepos;
 			break;
 		case 'a':
 			tilepos.x --;
 			updatetile();
+			last_tile = tilepos;
 			break;
 		case 's':
 			tilepos.y --;
-			updatetile();
+			if (updatetile() == 1)
+				newtile();
+			last_tile = tilepos;
 			break;
 		case 'd':
 			tilepos.x ++;
 			updatetile();
+			last_tile = tilepos;
 			break;
 	}
 	glutPostRedisplay();

@@ -97,7 +97,7 @@ FruitTetris.o: FruitTetris.cpp /usr/include/stdc-predef.h include/Angel.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
  /usr/include/GL/freeglut_ext.h /usr/include/GL/freeglut_ext.h \
  include/vec.h include/Angel.h include/mat.h include/CheckError.h \
- /usr/include/c++/4.8/cstdlib
+ /usr/include/c++/4.8/cstdlib /usr/include/c++/4.8/ctime
 InitShader.o: include/InitShader.cpp /usr/include/stdc-predef.h \
  include/Angel.h /usr/include/c++/4.8/cmath \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++config.h \
