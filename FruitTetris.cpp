@@ -439,15 +439,13 @@ void rotate()
 
 // Checks if the specified row (0 is the bottom 19 the top) is full
 // If every cell in the row is occupied, it will clear that cell and everything above it will shift down one row
-int checkfullrow(int row)
+void checkfullrow(int row)
 {
 	for (int i = 0; i < 10; i++)
 		if (board[i][row] == false)
-			return 0;
+			return;
 	for (int i = 0; i < 10; i++)
 		Remove(i, row);
-	//cout <<5<<endl;
-	return 1;
 }
 
 
@@ -466,39 +464,31 @@ bool CheckSameColor(int x1, int y1, int x2, int y2)
 
 void RemoveCol(int x, int y)
 {
-	y += 3;
-	while (board[x][y])
+	for (int i = y; i < 17; i++)
 	{
-		for (int i = 0; i < 6; i++)
-			boardcolours[x * 6 + y * 60 - 180 + i] = boardcolours[x * 6 + y * 60];
-		y++;
+		for (int j = 0;j < 6; j++)
+			boardcolours[x * 6 + i * 60 + j] = boardcolours[x * 6 + i * 60 + 180];
+		board[x][i] = board[x][i + 3];
 	}
-	for (int i = y - 3; i < y; i++)
-	{
-		for (int j = 0; j < 6; j++)
-			boardcolours[x * 6 + i * 60 + j] = black;
-		board[x][i] = false;
-	}
+	board[x][19] = false;
+	board[x][18] = false;
+	board[x][17] = false;
 }
 void Remove(int x, int y)
 {	
-	while (board[x][y] && y < 20)
+	for (int i = y; i < 19; i++)
 	{
-		for (int i = 0; i < 6; i++)
-			boardcolours[x * 6 + y * 60 + i] = boardcolours[x * 6 + y * 60 + 60];
-		y++;
+		for (int j = 0;j < 6; j++)
+			boardcolours[x * 6 + i * 60 + j] = boardcolours[x * 6 + i * 60 + 60];
+		board[x][i] = board[x][i + 1];
 	}
-	y--;
-	board[x][y] = false;
+	board[x][19] = false;
 }
 //-------------------------------------------------------------------------------------------------------------------
 void CheckRemove()
 {
-	for (int i = 0; i < 20; i ++)
-	{
-		if (checkfullrow(i))
-			i--;
-	}
+	for (int i = 19; i >= 0; i--)
+		checkfullrow(i);
 
 	for (int i = 0; i < 10; i++)
 		for (int j = 0; j < 20; j++)
