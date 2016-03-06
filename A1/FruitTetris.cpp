@@ -18,6 +18,8 @@ Modified in Sep 2014 by Honghua Li (honghual@sfu.ca).
 #include <cstdlib>
 #include <iostream>
 #include <ctime>
+#include <vector>
+#include <math.h>
 using namespace std;
 
 int count = 0;
@@ -33,6 +35,16 @@ vec2 last_tile;
 int xsize = 400; 
 int ysize = 720;
 
+float Camera_R = 1.0;
+float Camera_A1;
+float Camera_A2;
+
+mat4 model_view, projection;
+
+GLfloat g_left = -10.0, g_right = 10.0, g_bottom = -5.0, g_top = 15.0;
+
+GLint matrix_loc;
+GLint projection_loc;
 // current tile
 vec2 tile[4]; // An array of 4 2d vectors representing displacement from a 'center' piece of the tile, on the grid
 vec2 tilepos = vec2(5, 19); // The position of the current tile using grid coordinates ((0,0) is the bottom left corner)
@@ -254,26 +266,91 @@ void newtile()
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+void CreateCube(vector<vec4> &bp, int i, int j)
+{
+	vec4 p1 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), 0, 1);
+	vec4 p2 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), 0, 1);
+	vec4 p3 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), 0, 1);
+	vec4 p4 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), 0, 1);
+
+	vec4 p5 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), -33.0, 1);
+	vec4 p6 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), -33.0, 1);
+	vec4 p7 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), -33.0, 1);
+	vec4 p8 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), -33.0, 1);
+	
+	bp.push_back(p1);
+	bp.push_back(p2);
+	bp.push_back(p3);
+	bp.push_back(p2);
+	bp.push_back(p3);
+	bp.push_back(p4);
+
+	bp.push_back(p3);
+	bp.push_back(p4);
+	bp.push_back(p7);
+	bp.push_back(p4);
+	bp.push_back(p7);
+	bp.push_back(p8);
+
+	bp.push_back(p5);
+	bp.push_back(p6);
+	bp.push_back(p7);
+	bp.push_back(p6);
+	bp.push_back(p7);
+	bp.push_back(p8);
+
+	bp.push_back(p1);
+	bp.push_back(p2);
+	bp.push_back(p5);
+	bp.push_back(p2);
+	bp.push_back(p5);
+	bp.push_back(p6);
+
+	bp.push_back(p2);
+	bp.push_back(p4);
+	bp.push_back(p6);
+	bp.push_back(p6);
+	bp.push_back(p4);
+	bp.push_back(p8);
+
+	bp.push_back(p1);
+	bp.push_back(p3);
+	bp.push_back(p5);
+	bp.push_back(p5);
+	bp.push_back(p3);
+	bp.push_back(p7);
+}
 
 void initGrid()
 {
 	// ***Generate geometry data
-	vec4 gridpoints[64]; // Array containing the 64 points of the 32 total lines to be later put in the VBO
-	vec4 gridcolours[64]; // One colour per vertex
+	vector<vec4> gridpoints; // Array containing the 64 points of the 32 total lines to be later put in the VBO
+	vector<vec4> gridcolours; // One colour per vertex
 	// Vertical lines 
 	for (int i = 0; i < 11; i++){
-		gridpoints[2*i] = vec4((33.0 + (33.0 * i)), 33.0, 0, 1);
-		gridpoints[2*i + 1] = vec4((33.0 + (33.0 * i)), 693.0, 0, 1);
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, 0, 1));
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, 0, 1));
 		
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, -33.0, 1));
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, -33.0, 1));
+		for (int j = 0; j < 21; j++)
+		{
+			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), 0, 1));
+			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), -33.0, 1));
+		}
 	}
 	// Horizontal lines
 	for (int i = 0; i < 21; i++){
-		gridpoints[22 + 2*i] = vec4(33.0, (33.0 + (33.0 * i)), 0, 1);
-		gridpoints[22 + 2*i + 1] = vec4(363.0, (33.0 + (33.0 * i)), 0, 1);
+		gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), 0, 1));
+		gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), 0, 1));
+
+		gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), -33.0, 1));
+		gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), -33.0, 1));
 	}
+	int size = gridpoints.size();
 	// Make all grid lines white
-	for (int i = 0; i < 64; i++)
-		gridcolours[i] = white;
+	for (int i = 0; i < size; i++)
+		gridcolours.push_back(white);
 
 
 	// *** set up buffer objects
@@ -283,66 +360,71 @@ void initGrid()
 
 	// Grid vertex positions
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[0]); // Bind the first grid VBO (vertex positions)
-	glBufferData(GL_ARRAY_BUFFER, 64*sizeof(vec4), gridpoints, GL_STATIC_DRAW); // Put the grid points in the VBO
+	glBufferData(GL_ARRAY_BUFFER, size*sizeof(vec4), &gridpoints[0], GL_STATIC_DRAW); // Put the grid points in the VBO
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0); 
 	glEnableVertexAttribArray(vPosition); // Enable the attribute
 	
 	// Grid vertex colours
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[1]); // Bind the second grid VBO (vertex colours)
-	glBufferData(GL_ARRAY_BUFFER, 64*sizeof(vec4), gridcolours, GL_STATIC_DRAW); // Put the grid colours in the VBO
+	glBufferData(GL_ARRAY_BUFFER, size*sizeof(vec4), &gridcolours[0], GL_STATIC_DRAW); // Put the grid colours in the VBO
 	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vColor); // Enable the attribute
 }
 
-
 void initBoard()
 {
-	// *** Generate the geometric data
-	vec4 boardpoints[1200];
+	vector<vec4> boardpoints;
 	for (int i = 0; i < 1200; i++)
 		boardcolours[i] = black; // Let the empty cells on the board be black
 	// Each cell is a square (2 triangles with 6 vertices)
-	for (int i = 0; i < 20; i++){
+	for (int i = 0; i < 20; i++)
 		for (int j = 0; j < 10; j++)
-		{		
-			vec4 p1 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), .5, 1);
-			vec4 p2 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), .5, 1);
-			vec4 p3 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), .5, 1);
-			vec4 p4 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), .5, 1);
-			
-			// Two points are reused
-			boardpoints[6*(10*i + j)    ] = p1;
-			boardpoints[6*(10*i + j) + 1] = p2;
-			boardpoints[6*(10*i + j) + 2] = p3;
-			boardpoints[6*(10*i + j) + 3] = p2;
-			boardpoints[6*(10*i + j) + 4] = p3;
-			boardpoints[6*(10*i + j) + 5] = p4;
-		}
-	}
+			CreateCube(boardpoints,i,j);
 
 	// Initially no cell is occupied
 	for (int i = 0; i < 10; i++)
 		for (int j = 0; j < 20; j++)
 			board[i][j] = false; 
 
-
+	int size = boardpoints.size();
 	// *** set up buffer objects
 	glBindVertexArray(vaoIDs[1]);
 	glGenBuffers(2, &vboIDs[2]);
 
 	// Grid cell vertex positions
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
-	glBufferData(GL_ARRAY_BUFFER, 1200*sizeof(vec4), boardpoints, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, size*sizeof(vec4), &boardpoints[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
 
 	// Grid cell vertex colours
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
-	glBufferData(GL_ARRAY_BUFFER, 1200*sizeof(vec4), boardcolours, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, size*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vColor);
 }
 
+void Camera()
+{
+	vec4 eye;
+	eye[0] = Camera_R * sin(Camera_A1) * cos(Camera_A2);
+	eye[1] = Camera_R * cos(Camera_A1);
+	eye[2] = Camera_R * sin(Camera_A1) * sin(Camera_A2);
+	eye[3] = 1.0;
+
+	vec4 at = vec4(0.0, 0.0, 0.0, 1);
+	vec4 up = vec4(0.0, 1.0, 0.0, 0);
+
+	model_view = LookAt(eye, at, up);
+    model_view[0].w = 0;
+    model_view[1].w = 0;
+    model_view[2].w = 0;
+
+    projection = Ortho(g_left, g_right, g_bottom, g_top, -400, 400.0); 
+    glUniformMatrix4fv(matrix_loc, 1, GL_TRUE, model_view);
+    glUniformMatrix4fv(projection_loc, 1, GL_TRUE, projection);
+
+}
 // No geometry for current tile initially
 void initCurrentTile()
 {
@@ -365,6 +447,16 @@ void initCurrentTile()
 void init()
 {
 	srand(time(0));
+
+	Camera_R = 20;
+	Camera_A1 = M_PI / 3;
+	Camera_A2 = M_PI_4 / 2;
+
+	g_left = - xsize / 2 - 50;
+    g_right = xsize / 2;
+    g_top = ysize / 2 + 90;
+    g_bottom = - ysize / 2;
+
 	// Load shaders and use the shader program
 	GLuint program = InitShader("vshader.glsl", "fshader.glsl");
 	glUseProgram(program);
@@ -384,9 +476,10 @@ void init()
 	// The location of the uniform variables in the shader program
 	locxsize = glGetUniformLocation(program, "xsize"); 
 	locysize = glGetUniformLocation(program, "ysize");
-
+	matrix_loc = glGetUniformLocation(program, "model_view");
+    projection_loc = glGetUniformLocation(program, "projection");
 	// Game initialization
-	newtile(); // create new next tile
+	//newtile(); // create new next tile
 
 	// set to default
 	glBindVertexArray(0);
@@ -569,16 +662,18 @@ void restart()
 // Draws the game
 void display()
 {
-	count ++;
-	if (count > 50)
-	{
-		count = 0;
-		tilepos.y --;
-		updatetile();
-		last_tile = tilepos;
+	// count ++;
+	// if (count > 50)
+	// {
+	// 	count = 0;
+	// 	tilepos.y --;
+	// 	updatetile();
+	// 	last_tile = tilepos;
 
-	}
+	// }
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	Camera();
 
 	glUniform1i(locxsize, xsize); // x and y sizes are passed to the shader program to maintain shape of the vertices on screen
 	glUniform1i(locysize, ysize);
