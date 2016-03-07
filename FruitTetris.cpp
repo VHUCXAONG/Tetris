@@ -32,19 +32,16 @@ bool end = false;
 vec2 last_pos[4] = {vec2(-1,-1),vec2(-1,-1),vec2(-1,-1),vec2(-1,-1)};
 vec2 last_tile;
 // xsize and ysize represent the window size - updated if window is reshaped to prevent stretching of the game
-int xsize = 400; 
+int xsize = 720; 
 int ysize = 720;
 
-float Camera_R = 1.0;
-float Camera_A1;
-float Camera_A2;
+GLfloat R = 1000.0;
+GLfloat theta = 0;
 
-mat4 model_view, projection;
+GLfloat  zNear = 2, zFar = 3000;
 
-GLfloat g_left = -10.0, g_right = 10.0, g_bottom = -5.0, g_top = 15.0;
-
-GLint matrix_loc;
-GLint projection_loc;
+GLint model_view;
+GLint projection;
 // current tile
 vec2 tile[4]; // An array of 4 2d vectors representing displacement from a 'center' piece of the tile, on the grid
 vec2 tilepos = vec2(5, 19); // The position of the current tile using grid coordinates ((0,0) is the bottom left corner)
@@ -268,15 +265,15 @@ void newtile()
 //-------------------------------------------------------------------------------------------------------------------
 void CreateCube(vector<vec4> &bp, int i, int j)
 {
-	vec4 p1 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), 0, 1);
-	vec4 p2 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), 0, 1);
-	vec4 p3 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), 0, 1);
-	vec4 p4 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), 0, 1);
+	vec4 p1 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), 16.5, 1);
+	vec4 p2 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), 16.5, 1);
+	vec4 p3 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), 16.5, 1);
+	vec4 p4 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), 16.5, 1);
 
-	vec4 p5 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), -33.0, 1);
-	vec4 p6 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), -33.0, 1);
-	vec4 p7 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), -33.0, 1);
-	vec4 p8 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), -33.0, 1);
+	vec4 p5 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), -16.5, 1);
+	vec4 p6 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), -16.5, 1);
+	vec4 p7 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), -16.5, 1);
+	vec4 p8 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), -16.5, 1);
 	
 	bp.push_back(p1);
 	bp.push_back(p2);
@@ -328,24 +325,24 @@ void initGrid()
 	vector<vec4> gridcolours; // One colour per vertex
 	// Vertical lines 
 	for (int i = 0; i < 11; i++){
-		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, 0, 1));
-		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, 0, 1));
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, 16.5, 1));
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, 16.5, 1));
 		
-		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, -33.0, 1));
-		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, -33.0, 1));
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, -16.5, 1));
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, -16.5, 1));
 		for (int j = 0; j < 21; j++)
 		{
-			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), 0, 1));
-			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), -33.0, 1));
+			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), 16.5, 1));
+			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), -16.5, 1));
 		}
 	}
 	// Horizontal lines
 	for (int i = 0; i < 21; i++){
-		gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), 0, 1));
-		gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), 0, 1));
+		gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), 16.5, 1));
+		gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), 16.5, 1));
 
-		gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), -33.0, 1));
-		gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), -33.0, 1));
+		gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), -16.5, 1));
+		gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), -16.5, 1));
 	}
 	int size = gridpoints.size();
 	// Make all grid lines white
@@ -407,25 +404,24 @@ void initBoard()
 void Camera()
 {
 	vec4 eye;
-	eye[0] = Camera_R * sin(Camera_A1) * cos(Camera_A2);
-	eye[1] = Camera_R * cos(Camera_A1);
-	eye[2] = Camera_R * sin(Camera_A1) * sin(Camera_A2);
-	eye[3] = 1.0;
 
-	vec4 at = vec4(0.0, 0.0, 0.0, 1);
-	vec4 up = vec4(0.0, 1.0, 0.0, 0);
+	eye[0] = R * cos(theta * DegreesToRadians) + 33 * 6;
+	eye[1] = (33 + 693) / 2;
+	eye[2] = R * sin(theta * DegreesToRadians);
 
-	model_view = LookAt(eye, at, up);
-    model_view[0].w = 0;
-    model_view[1].w = 0;
-    model_view[2].w = 0;
+    vec4  at( (33 + 363) / 2, (33 + 693) / 2, 0.0, 1.0 );
+    vec4  up( 0.0, 1.0, 0.0, 1.0 );	
 
-    projection = Ortho(g_left, g_right, g_bottom, g_top, -400, 400.0); 
-    glUniformMatrix4fv(matrix_loc, 1, GL_TRUE, model_view);
-    glUniformMatrix4fv(projection_loc, 1, GL_TRUE, projection);
+    mat4 mv = LookAt(eye, at, up);
 
+    GLdouble ratio = ysize / xsize;
+    mat4 p = Perspective(50, 1, zNear, zFar);
+    glUniformMatrix4fv(model_view, 1, GL_TRUE, mv);
+    glUniformMatrix4fv(projection, 1, GL_TRUE, p);
 }
-// No geometry for current tile initially
+
+
+// No geometry for current tile Initially
 void initCurrentTile()
 {
 	glBindVertexArray(vaoIDs[2]);
@@ -448,15 +444,6 @@ void init()
 {
 	srand(time(0));
 
-	Camera_R = 20;
-	Camera_A1 = M_PI / 3;
-	Camera_A2 = M_PI_4 / 2;
-
-	g_left = - xsize / 2 - 50;
-    g_right = xsize / 2;
-    g_top = ysize / 2 + 90;
-    g_bottom = - ysize / 2;
-
 	// Load shaders and use the shader program
 	GLuint program = InitShader("vshader.glsl", "fshader.glsl");
 	glUseProgram(program);
@@ -476,8 +463,8 @@ void init()
 	// The location of the uniform variables in the shader program
 	locxsize = glGetUniformLocation(program, "xsize"); 
 	locysize = glGetUniformLocation(program, "ysize");
-	matrix_loc = glGetUniformLocation(program, "model_view");
-    projection_loc = glGetUniformLocation(program, "projection");
+	model_view = glGetUniformLocation(program, "ModelView");
+    projection = glGetUniformLocation(program, "Projection");
 	// Game initialization
 	//newtile(); // create new next tile
 
@@ -671,21 +658,21 @@ void display()
 	// 	last_tile = tilepos;
 
 	// }
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	Camera();
 
-	glUniform1i(locxsize, xsize); // x and y sizes are passed to the shader program to maintain shape of the vertices on screen
-	glUniform1i(locysize, ysize);
+	// glUniform1i(locxsize, xsize); // x and y sizes are passed to the shader program to maintain shape of the vertices on screen
+	// glUniform1i(locysize, ysize);
 
 	glBindVertexArray(vaoIDs[1]); // Bind the VAO representing the grid cells (to be drawn first)
-	glDrawArrays(GL_TRIANGLES, 0, 1200); // Draw the board (10*20*2 = 400 triangles)
+	glDrawArrays(GL_TRIANGLES, 0, 7200); // Draw the board (10*20*2 = 400 triangles)
 
 	glBindVertexArray(vaoIDs[2]); // Bind the VAO representing the current tile (to be drawn on top of the board)
-	glDrawArrays(GL_TRIANGLES, 0, 24); // Draw the current tile (8 triangles)
+	glDrawArrays(GL_TRIANGLES, 0, 24 * 6); // Draw the current tile (8 triangles)
 
 	glBindVertexArray(vaoIDs[0]); // Bind the VAO representing the grid lines (to be drawn on top of everything else)
-	glDrawArrays(GL_LINES, 0, 64); // Draw the grid lines (21+11 = 32 lines)
+	glDrawArrays(GL_LINES, 0, 590); // Draws the grid lines (21+11 = 32 lines)
 
 
 	glutSwapBuffers();
@@ -707,6 +694,20 @@ void reshape(GLsizei w, GLsizei h)
 // Handle arrow key keypresses
 void special(int key, int x, int y)
 {
+	bool CTRLpress = 0;
+	int mod_key = glutGetModifiers();
+	if (mod_key != 0)
+    {
+    	if (mod_key == GLUT_ACTIVE_CTRL)
+	    {
+	    	CTRLpress=1;
+	    }
+	}
+    else if (CTRLpress)
+    {
+    	CTRLpress=0;
+    }
+
 	switch(key) 
 	{
 		case GLUT_KEY_UP:
@@ -714,9 +715,13 @@ void special(int key, int x, int y)
 			last_tile = tilepos;
 			break;
 		case GLUT_KEY_LEFT:
-			tilepos.x --;
-			updatetile();
-			last_tile = tilepos;
+			if (CTRLpress)
+				theta -= 5;
+			else{
+				tilepos.x --;
+				updatetile();
+				last_tile = tilepos;
+			}
 			break;
 		case GLUT_KEY_DOWN:
 			tilepos.y --;
@@ -724,9 +729,13 @@ void special(int key, int x, int y)
 			last_tile = tilepos;
 			break;
 		case GLUT_KEY_RIGHT:
-			tilepos.x ++;
-			updatetile();
-			last_tile = tilepos;
+			if (CTRLpress)
+					theta += 5;
+			else{
+				tilepos.x ++;
+				updatetile();
+				last_tile = tilepos;
+			}
 			break;
 	}
 }
@@ -763,7 +772,7 @@ void idle(void)
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(xsize, ysize);
 	glutInitWindowPosition(680, 178); // Center the game window (well, on a 1920x1080 display)
 	glutCreateWindow("Fruit Tetris");
