@@ -40,6 +40,7 @@ GLfloat theta = 0;
 
 GLfloat armtheta = 0;
 GLfloat armphi = 0;
+float armlen = 400;
 
 GLfloat  zNear = 2, zFar = 3000;
 
@@ -246,8 +247,10 @@ void newtile()
 {
 	mode = rand() % mode_type;//get random shape
 	cur_index = mode * 4 + rand()%4; 
-	vec3 max = GetTop(cur_index);
-	tilepos = vec2(rand() % 5 + 2, 19 - max.x);
+	//vec3 max = GetTop(cur_index);
+	int x = (int)(((-120 - armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) - 33.0) / 33.0);
+	int y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0);
+	tilepos = vec2(x, y);
 	last_tile = tilepos;
 	flag = 0;
 	// Update the geometry VBO of current tile
@@ -723,7 +726,7 @@ void display()
 	glBindVertexArray(vaoIDs[0]); // Bind the VAO representing the grid lines (to be drawn on top of everything else)
 	glDrawArrays(GL_LINES, 0, 590); // Draws the grid lines (21+11 = 32 lines)
 
-	float armlen = 400;
+
 
 	mat4 Modelv;
     Modelv = Translate( -160 , 33, 0 );
