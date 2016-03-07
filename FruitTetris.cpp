@@ -96,7 +96,7 @@ bool board[10][20];
 //An array containing the colour of each of the 10*20*2*3 vertices that make up the board
 //Initially, all will be set to black. As tiles are placed, sets of 6 vertices (2 triangles; 1 square)
 //will be set to the appropriate colour in this array before updating the corresponding VBO
-vec4 boardcolours[1200];
+vec4 boardcolours[7200];
 
 // location of vertex attributes in the shader program
 GLuint vPosition;
@@ -107,7 +107,7 @@ GLuint locxsize;
 GLuint locysize;
 
 // VAO and VBO
-GLuint vaoIDs[3]; // One VAO for each object: the grid, the board, the current piece
+GLuint vaoIDs[4]; // One VAO for each object: the grid, the board, the current piece
 GLuint vboIDs[6]; // Two Vertex Buffer Objects for each VAO (specifying vertex positions and colours, respectively)
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -131,16 +131,20 @@ void DrawLast()
 		board[(int)x][(int)y] = true;
 		// Create the 4 corners of the square - these vertices are using location in pixels
 		// These vertices are later converted by the vertex shader
-		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), .4, 1); 
-		vec4 p2 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), .4, 1);
-		vec4 p3 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), .4, 1);
-		vec4 p4 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), .4, 1);
+		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1); 
+		vec4 p2 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
+		vec4 p3 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1);
+		vec4 p4 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
+		vec4 p5 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1); 
+		vec4 p6 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
+		vec4 p7 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1);
+		vec4 p8 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
 
 		// Two points are used by two triangles each
-		vec4 newpoints[6] = {p1, p2, p3, p2, p3, p4}; 
+		vec4 newpoints[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
 
 		// Put new data in the VBO
-		glBufferSubData(GL_ARRAY_BUFFER, i*6*sizeof(vec4), 6*sizeof(vec4), newpoints); 
+		glBufferSubData(GL_ARRAY_BUFFER, i*36*sizeof(vec4), 36*sizeof(vec4), newpoints); 
 	}
 
 	glBindVertexArray(0);
@@ -192,16 +196,21 @@ int updatetile()
 		board[(int)x][(int)y] = true;
 		// Create the 4 corners of the square - these vertices are using location in pixels
 		// These vertices are later converted by the vertex shader
-		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), .4, 1); 
-		vec4 p2 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), .4, 1);
-		vec4 p3 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), .4, 1);
-		vec4 p4 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), .4, 1);
+		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1); 
+		vec4 p2 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
+		vec4 p3 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1);
+		vec4 p4 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
+		vec4 p5 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1); 
+		vec4 p6 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
+		vec4 p7 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1);
+		vec4 p8 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
 
 		// Two points are used by two triangles each
-		vec4 newpoints[6] = {p1, p2, p3, p2, p3, p4}; 
+		vec4 newpoints[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
+
 
 		// Put new data in the VBO
-		glBufferSubData(GL_ARRAY_BUFFER, i*6*sizeof(vec4), 6*sizeof(vec4), newpoints); 
+		glBufferSubData(GL_ARRAY_BUFFER, i*36*sizeof(vec4), 36*sizeof(vec4), newpoints); 
 	}
 
 	glBindVertexArray(0);
@@ -225,7 +234,7 @@ vec3 GetTop(int index)
 }
 
 // Called at the start of play and every time a tile is placed
-vec4 newcolours[24];
+vec4 newcolours[24 * 6];
 void newtile()
 {
 	mode = rand() % mode_type;//get random shape
@@ -249,19 +258,18 @@ void newtile()
 	else
 		DrawLast();
 		// Update the color VBO of current tile
-		for (int i = 0; i < 4; i++)
-		{
-			int c = rand() % 5;
-			for (int j = i * 6; j < (i + 1) * 6; j++)
-				newcolours[j] = color[c]; 
-		}
-		glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	for (int i = 0; i < 4; i++)
+	{
+		int c = rand() % 5;
+		for (int j = i * 36; j < (i + 1) * 36; j++)
+			newcolours[j] = color[c]; 
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		glBindVertexArray(0);
+	glBindVertexArray(0);
 }
-
 //-------------------------------------------------------------------------------------------------------------------
 void CreateCube(vector<vec4> &bp, int i, int j)
 {
@@ -371,7 +379,7 @@ void initGrid()
 void initBoard()
 {
 	vector<vec4> boardpoints;
-	for (int i = 0; i < 1200; i++)
+	for (int i = 0; i < 7200; i++)
 		boardcolours[i] = black; // Let the empty cells on the board be black
 	// Each cell is a square (2 triangles with 6 vertices)
 	for (int i = 0; i < 20; i++)
@@ -400,7 +408,33 @@ void initBoard()
 	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vColor);
 }
+void OriginalCube()
+{
+	vec4 cubeColor[36];
+	vec4 p1 = vec4 (0, 0, 0.5, 1);
+	vec4 p2 = vec4 (0, 1, 0.5, 1);
+	vec4 p3 = vec4 (1, 0, 0.5, 1);
+	vec4 p4 = vec4 (1, 1, 0.5, 1);
+	vec4 p5 = vec4 (0, 0, -0.5, 1);
+	vec4 p6 = vec4 (0, 1, -0.5, 1);
+	vec4 p7 = vec4 (1, 0, -0.5, 1);
+	vec4 p8 = vec4 (1, 1, -0.5, 1);
+	vec4 cubePosition[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
+	for (int i = 0; i < 36; i++)
+		cubeColor[i] = red;
+	glBindVertexArray(vaoIDs[3]);
+	glGenBuffers(2, &vboIDs[2]);
 
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+	glBufferData(GL_ARRAY_BUFFER, 36*sizeof(vec4), cubePosition, GL_STATIC_DRAW);
+	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vPosition);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
+	glBufferData(GL_ARRAY_BUFFER, 36*sizeof(vec4), cubeColor, GL_DYNAMIC_DRAW);
+	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vColor);
+}
 void Camera()
 {
 	vec4 eye;
@@ -429,13 +463,13 @@ void initCurrentTile()
 
 	// Current tile vertex positions
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]);
-	glBufferData(GL_ARRAY_BUFFER, 24*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 6 * 24*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
 
 	// Current tile vertex colours
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]);
-	glBufferData(GL_ARRAY_BUFFER, 24*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 6 * 24*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vColor);
 }
@@ -453,20 +487,20 @@ void init()
 	vColor = glGetAttribLocation(program, "vColor");
 
 	// Create 3 Vertex Array Objects, each representing one 'object'. Store the names in array vaoIDs
-	glGenVertexArrays(3, &vaoIDs[0]);
+	glGenVertexArrays(4, &vaoIDs[0]);
 
 	// Initialize the grid, the board, and the current tile
 	initGrid();
 	initBoard();
 	initCurrentTile();
-
+	OriginalCube();
 	// The location of the uniform variables in the shader program
 	locxsize = glGetUniformLocation(program, "xsize"); 
 	locysize = glGetUniformLocation(program, "ysize");
 	model_view = glGetUniformLocation(program, "ModelView");
     projection = glGetUniformLocation(program, "Projection");
 	// Game initialization
-	//newtile(); // create new next tile
+	newtile(); // create new next tile
 
 	// set to default
 	glBindVertexArray(0);
@@ -515,101 +549,101 @@ void rotate()
 	last_tile = tilepos;
 }
 
-//-------------------------------------------------------------------------------------------------------------------
+// //-------------------------------------------------------------------------------------------------------------------
 
-// Checks if the specified row (0 is the bottom 19 the top) is full
-// If every cell in the row is occupied, it will clear that cell and everything above it will shift down one row
-void checkfullrow(int row)
-{
-	for (int i = 0; i < 10; i++)
-		if (board[i][row] == false)
-			return;
-	for (int i = 0; i < 10; i++)
-		Remove(i, row);
-}
+// // Checks if the specified row (0 is the bottom 19 the top) is full
+// // If every cell in the row is occupied, it will clear that cell and everything above it will shift down one row
+// void checkfullrow(int row)
+// {
+// 	for (int i = 0; i < 10; i++)
+// 		if (board[i][row] == false)
+// 			return;
+// 	for (int i = 0; i < 10; i++)
+// 		Remove(i, row);
+// }
 
 
-bool CheckSameColor(int x1, int y1, int x2, int y2)
-{	
-	if (x2 < 0 || x2 > 9 || y2 < 0 || y2 > 19)
-		return false;
-	int x = x1 * 6 + y1 * 60;
-	int y = x2 * 6 + y2 * 60;
-	if (board[x1][y1] && board[x2][y2]&&
-		(abs(boardcolours[x].x - boardcolours[y].x) < 0.0001) && (abs(boardcolours[x].y - boardcolours[y].y) < 0.0001)&&
-		(abs(boardcolours[x].z - boardcolours[y].z) < 0.0001) && (abs(boardcolours[x].w - boardcolours[y].w) < 0.0001))
-		return true;
-	return false;
-}
+// bool CheckSameColor(int x1, int y1, int x2, int y2)
+// {	
+// 	if (x2 < 0 || x2 > 9 || y2 < 0 || y2 > 19)
+// 		return false;
+// 	int x = x1 * 6 + y1 * 60;
+// 	int y = x2 * 6 + y2 * 60;
+// 	if (board[x1][y1] && board[x2][y2]&&
+// 		(abs(boardcolours[x].x - boardcolours[y].x) < 0.0001) && (abs(boardcolours[x].y - boardcolours[y].y) < 0.0001)&&
+// 		(abs(boardcolours[x].z - boardcolours[y].z) < 0.0001) && (abs(boardcolours[x].w - boardcolours[y].w) < 0.0001))
+// 		return true;
+// 	return false;
+// }
 
-void RemoveCol(int x, int y)
-{
-	for (int i = y; i < 17; i++)
-	{
-		for (int j = 0;j < 6; j++)
-			boardcolours[x * 6 + i * 60 + j] = boardcolours[x * 6 + i * 60 + 180];
-		board[x][i] = board[x][i + 3];
-	}
-	board[x][19] = false;
-	board[x][18] = false;
-	board[x][17] = false;
-}
-void Remove(int x, int y)
-{	
-	for (int i = y; i < 19; i++)
-	{
-		for (int j = 0;j < 6; j++)
-			boardcolours[x * 6 + i * 60 + j] = boardcolours[x * 6 + i * 60 + 60];
-		board[x][i] = board[x][i + 1];
-	}
-	board[x][19] = false;
-}
-//-------------------------------------------------------------------------------------------------------------------
-void CheckRemove()
-{
-	for (int i = 19; i >= 0; i--)
-		checkfullrow(i);
+// void RemoveCol(int x, int y)
+// {
+// 	for (int i = y; i < 17; i++)
+// 	{
+// 		for (int j = 0;j < 6; j++)
+// 			boardcolours[x * 6 + i * 60 + j] = boardcolours[x * 6 + i * 60 + 180];
+// 		board[x][i] = board[x][i + 3];
+// 	}
+// 	board[x][19] = false;
+// 	board[x][18] = false;
+// 	board[x][17] = false;
+// }
+// void Remove(int x, int y)
+// {	
+// 	for (int i = y; i < 19; i++)
+// 	{
+// 		for (int j = 0;j < 6; j++)
+// 			boardcolours[x * 6 + i * 60 + j] = boardcolours[x * 6 + i * 60 + 60];
+// 		board[x][i] = board[x][i + 1];
+// 	}
+// 	board[x][19] = false;
+// }
+// //-------------------------------------------------------------------------------------------------------------------
+// void CheckRemove()
+// {
+// 	for (int i = 19; i >= 0; i--)
+// 		checkfullrow(i);
 
-	for (int i = 0; i < 10; i++)
-		for (int j = 0; j < 20; j++)
-		{
-			if (CheckSameColor(i, j, i - 1, j) && CheckSameColor(i, j, i + 1, j))
-			{
-				//cout << 1 <<endl;
-				Remove(i, j);
-				Remove(i - 1, j);
-				Remove(i + 1, j);
-				CheckRemove();
-				return;
-			}
-			if (CheckSameColor(i, j, i, j - 1) && CheckSameColor(i, j, i, j + 1))
-			{
-				//cout << 2 <<endl;
-				RemoveCol(i, j - 1);
-				CheckRemove();
-				return;
-			}
-			if (CheckSameColor(i, j, i - 1, j + 1) && CheckSameColor(i, j, i + 1, j - 1))
-			{
-				//cout << 3 <<endl;
-				Remove(i, j);
-				Remove(i - 1, j + 1);
-				Remove(i + 1, j - 1);
-				CheckRemove();
-				return;
-			}
-			if (CheckSameColor(i, j, i + 1, j + 1) && CheckSameColor(i, j, i - 1, j - 1))
-			{
-				//cout << 4 <<endl;
-				Remove(i, j);
-				Remove(i + 1, j + 1);
-				Remove(i - 1, j - 1);
-				CheckRemove();
-				return;
-			}
+// 	for (int i = 0; i < 10; i++)
+// 		for (int j = 0; j < 20; j++)
+// 		{
+// 			if (CheckSameColor(i, j, i - 1, j) && CheckSameColor(i, j, i + 1, j))
+// 			{
+// 				//cout << 1 <<endl;
+// 				Remove(i, j);
+// 				Remove(i - 1, j);
+// 				Remove(i + 1, j);
+// 				CheckRemove();
+// 				return;
+// 			}
+// 			if (CheckSameColor(i, j, i, j - 1) && CheckSameColor(i, j, i, j + 1))
+// 			{
+// 				//cout << 2 <<endl;
+// 				RemoveCol(i, j - 1);
+// 				CheckRemove();
+// 				return;
+// 			}
+// 			if (CheckSameColor(i, j, i - 1, j + 1) && CheckSameColor(i, j, i + 1, j - 1))
+// 			{
+// 				//cout << 3 <<endl;
+// 				Remove(i, j);
+// 				Remove(i - 1, j + 1);
+// 				Remove(i + 1, j - 1);
+// 				CheckRemove();
+// 				return;
+// 			}
+// 			if (CheckSameColor(i, j, i + 1, j + 1) && CheckSameColor(i, j, i - 1, j - 1))
+// 			{
+// 				//cout << 4 <<endl;
+// 				Remove(i, j);
+// 				Remove(i + 1, j + 1);
+// 				Remove(i - 1, j - 1);
+// 				CheckRemove();
+// 				return;
+// 			}
 
-		}
-}
+// 		}
+// }
 // Places the current tile - update the board vertex colour VBO and the array maintaining occupied cells
 void settile()
 {
@@ -617,11 +651,11 @@ void settile()
 	{
 		GLfloat x = tilepos.x + tile[i].x;
 		GLfloat y = tilepos.y + tile[i].y;
-		int index = (x + y * 10) * 6;
-		for (int j = index; j < index + 6; j++)
-			boardcolours[j] = newcolours[i * 6];
+		int index = (x + y * 10) * 36;
+		for (int j = index; j < index + 36; j++)
+			boardcolours[j] = newcolours[i * 36];
 	}
-	CheckRemove();
+	//CheckRemove();
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]); // Bind the VBO containing current tile vertex colours
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(boardcolours), boardcolours); // Put the colour data in the VBO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);	
@@ -674,6 +708,8 @@ void display()
 	glBindVertexArray(vaoIDs[0]); // Bind the VAO representing the grid lines (to be drawn on top of everything else)
 	glDrawArrays(GL_LINES, 0, 590); // Draws the grid lines (21+11 = 32 lines)
 
+	glBindVertexArray(vaoIDs[3]); 
+	glDrawArrays(GL_TRIANGLES, 0, 36); 
 
 	glutSwapBuffers();
 }
@@ -694,19 +730,6 @@ void reshape(GLsizei w, GLsizei h)
 // Handle arrow key keypresses
 void special(int key, int x, int y)
 {
-	bool CTRLpress = 0;
-	int mod_key = glutGetModifiers();
-	if (mod_key != 0)
-    {
-    	if (mod_key == GLUT_ACTIVE_CTRL)
-	    {
-	    	CTRLpress=1;
-	    }
-	}
-    else if (CTRLpress)
-    {
-    	CTRLpress=0;
-    }
 
 	switch(key) 
 	{
@@ -715,7 +738,7 @@ void special(int key, int x, int y)
 			last_tile = tilepos;
 			break;
 		case GLUT_KEY_LEFT:
-			if (CTRLpress)
+			if (glutGetModifiers() == GLUT_ACTIVE_CTRL)
 				theta -= 5;
 			else{
 				tilepos.x --;
@@ -729,7 +752,7 @@ void special(int key, int x, int y)
 			last_tile = tilepos;
 			break;
 		case GLUT_KEY_RIGHT:
-			if (CTRLpress)
+			if (glutGetModifiers() == GLUT_ACTIVE_CTRL)
 					theta += 5;
 			else{
 				tilepos.x ++;
