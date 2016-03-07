@@ -109,7 +109,7 @@ GLuint locysize;
 // VAO and VBO
 GLuint vaoIDs[4]; // One VAO for each object: the grid, the board, the current piece
 GLuint vboIDs[6]; // Two Vertex Buffer Objects for each VAO (specifying vertex positions and colours, respectively)
-
+GLuint vbo2[2];
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -423,14 +423,14 @@ void OriginalCube()
 	for (int i = 0; i < 36; i++)
 		cubeColor[i] = red;
 	glBindVertexArray(vaoIDs[3]);
-	glGenBuffers(2, &vboIDs[2]);
+	glGenBuffers(2, &vbo2[0]);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo2[0]);
 	glBufferData(GL_ARRAY_BUFFER, 36*sizeof(vec4), cubePosition, GL_STATIC_DRAW);
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo2[1]);
 	glBufferData(GL_ARRAY_BUFFER, 36*sizeof(vec4), cubeColor, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vColor);
@@ -452,6 +452,7 @@ void Camera()
     mat4 p = Perspective(50, 1, zNear, zFar);
     glUniformMatrix4fv(model_view, 1, GL_TRUE, mv);
     glUniformMatrix4fv(projection, 1, GL_TRUE, p);
+    //glBindVertexArray(vaoIDs[1]);
 }
 
 
