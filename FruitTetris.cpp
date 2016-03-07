@@ -38,6 +38,9 @@ int ysize = 720;
 GLfloat R = 1000.0;
 GLfloat theta = 0;
 
+GLfloat armtheta = 0;
+GLfloat armphi = 0;
+
 GLfloat  zNear = 2, zFar = 3000;
 
 GLint model_view;
@@ -91,7 +94,8 @@ vec4 yellow = vec4(1.0, 1.0, 0.0, 1.0);
 vec4 green  = vec4(0.0, 1.0, 0.0, 1.0);
 vec4 white  = vec4(1.0, 1.0, 1.0, 1.0);
 vec4 black  = vec4(0.0, 0.0, 0.0, 1.0); 
-vec4 color[5] = {orange, purple, red, yellow, green};
+vec4 blue 	= vec4(0.0, 0.0, 1.0, 1.0);
+vec4 color[6] = {orange, purple, red, yellow, green, blue};
 //board[x][y] represents whether the cell (x,y) is occupied
 bool board[10][20]; 
 
@@ -109,9 +113,10 @@ GLuint locxsize;
 GLuint locysize;
 
 // VAO and VBO
-GLuint vaoIDs[4]; // One VAO for each object: the grid, the board, the current piece
+GLuint vaoIDs[3]; // One VAO for each object: the grid, the board, the current piece
 GLuint vboIDs[6]; // Two Vertex Buffer Objects for each VAO (specifying vertex positions and colours, respectively)
-GLuint vbo2[2];
+GLuint vbo2[6];
+GLuint vao2[3];
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -220,20 +225,20 @@ int updatetile()
 }
 
 //-------------------------------------------------------------------------------------------------------------------
-vec3 GetTop(int index)
-{
-	vec3 re = vec3(0, 0, 0);
-	for (int i = 0; i < 4; i++)
-	{
-		if (allRotationsLshape[index][i].y > re.x)
-			re.x = allRotationsLshape[index][i].y;
-		if (allRotationsLshape[index][i].x < re.y)
-			re.y = allRotationsLshape[index][i].x;
-		if (allRotationsLshape[index][i].x > re.z)
-			re.z = allRotationsLshape[index][i].x;
-	}
-	return re;
-}
+// vec3 GetTop(int index)
+// {
+// 	vec3 re = vec3(0, 0, 0);
+// 	for (int i = 0; i < 4; i++)
+// 	{
+// 		if (allRotationsLshape[index][i].y > re.x)
+// 			re.x = allRotationsLshape[index][i].y;
+// 		if (allRotationsLshape[index][i].x < re.y)
+// 			re.y = allRotationsLshape[index][i].x;
+// 		if (allRotationsLshape[index][i].x > re.z)
+// 			re.z = allRotationsLshape[index][i].x;
+// 	}
+// 	return re;
+// }
 
 // Called at the start of play and every time a tile is placed
 vec4 newcolours[24 * 6];
@@ -410,7 +415,7 @@ void initBoard()
 	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vColor);
 }
-void OriginalCube()
+void OriginalCube(int i)
 {
 	vec4 cubeColor[36];
 	vec4 p1 = vec4 (0, 0, 0.5, 1);
@@ -422,17 +427,21 @@ void OriginalCube()
 	vec4 p7 = vec4 (1, 0, -0.5, 1);
 	vec4 p8 = vec4 (1, 1, -0.5, 1);
 	vec4 cubePosition[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
-	for (int i = 0; i < 36; i++)
-		cubeColor[i] = red;
-	glBindVertexArray(vaoIDs[3]);
-	glGenBuffers(2, &vbo2[0]);
+	for (int j = 0; j < 6; j++)
+	{
+		for (int k = 0; k < 6; k++)
+		cubeColor[j *6 + k] = color[j];
+	}
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo2[0]);
+	glBindVertexArray(vao2[i]);
+	glGenBuffers(2, &vbo2[2 * i]);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo2[2 * i]);
 	glBufferData(GL_ARRAY_BUFFER, 36*sizeof(vec4), cubePosition, GL_STATIC_DRAW);
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo2[1]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo2[2 * i + 1]);
 	glBufferData(GL_ARRAY_BUFFER, 36*sizeof(vec4), cubeColor, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vColor);
@@ -498,7 +507,8 @@ void init()
 	initGrid();
 	initBoard();
 	initCurrentTile();
-	OriginalCube();
+	for (int i = 0; i < 3; i++)
+		OriginalCube(i);
 	// The location of the uniform variables in the shader program
 	locxsize = glGetUniformLocation(program, "xsize"); 
 	locysize = glGetUniformLocation(program, "ysize");
@@ -713,12 +723,29 @@ void display()
 	glBindVertexArray(vaoIDs[0]); // Bind the VAO representing the grid lines (to be drawn on top of everything else)
 	glDrawArrays(GL_LINES, 0, 590); // Draws the grid lines (21+11 = 32 lines)
 
+	float armlen = 400;
 
 	mat4 Modelv;
-    Modelv = Translate( -150 , 33, 0 );
-    mat4 instance1 = Modelv * Scale( 120, 40, 120);
-    glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * instance1 );
-    glBindVertexArray(vaoIDs[3]);
+    Modelv = Translate( -160 , 33, 0 );
+    mat4 M = Modelv * Scale( 120, 40, 120);
+    glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * M );
+    glBindVertexArray(vao2[0]);
+	glDrawArrays(GL_TRIANGLES, 0, 36); 
+
+	Modelv = Translate( -120, 33, 0);
+	mat4 M1 = Modelv * RotateZ(armtheta);
+	M = M1 * Scale(20, armlen, 20);
+	glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * M );
+	glBindVertexArray(vao2[1]);
+	glDrawArrays(GL_TRIANGLES, 0, 36); 
+
+	float x = -120 - armlen * sin(armtheta * DegreesToRadians);
+	float y = armlen * cos(armtheta * DegreesToRadians) + 33;
+	Modelv = Translate( x, y, 0);
+	M1 = Modelv * RotateZ(armphi);
+	M = M1 * Scale(armlen, 20, 20);
+	glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * M );
+	glBindVertexArray(vao2[2]);
 	glDrawArrays(GL_TRIANGLES, 0, 36); 
 
 	glutSwapBuffers();
@@ -788,6 +815,18 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'r': // 'r' key restarts the game
 			restart();
+			break;
+		case 'w':
+			armtheta -= 2;
+			break;
+		case 's':
+			armtheta += 2;
+			break;
+		case 'a':
+			armphi -= 2;
+			break;
+		case 'd':
+			armphi += 2;
 			break;
 	}
 	glutPostRedisplay();
