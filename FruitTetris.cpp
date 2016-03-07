@@ -42,6 +42,8 @@ GLfloat  zNear = 2, zFar = 3000;
 
 GLint model_view;
 GLint projection;
+
+mat4 mv;
 // current tile
 vec2 tile[4]; // An array of 4 2d vectors representing displacement from a 'center' piece of the tile, on the grid
 vec2 tilepos = vec2(5, 19); // The position of the current tile using grid coordinates ((0,0) is the bottom left corner)
@@ -446,13 +448,15 @@ void Camera()
     vec4  at( (33 + 363) / 2, (33 + 693) / 2, 0.0, 1.0 );
     vec4  up( 0.0, 1.0, 0.0, 1.0 );	
 
-    mat4 mv = LookAt(eye, at, up);
+    mv = LookAt(eye, at, up);
 
     GLdouble ratio = ysize / xsize;
     mat4 p = Perspective(50, 1, zNear, zFar);
     glUniformMatrix4fv(model_view, 1, GL_TRUE, mv);
     glUniformMatrix4fv(projection, 1, GL_TRUE, p);
-    //glBindVertexArray(vaoIDs[1]);
+    glBindVertexArray(vaoIDs[1]);
+
+    //glDrawArrays( GL_TRIANGLES, 0, NumVertices );
 }
 
 
@@ -709,7 +713,12 @@ void display()
 	glBindVertexArray(vaoIDs[0]); // Bind the VAO representing the grid lines (to be drawn on top of everything else)
 	glDrawArrays(GL_LINES, 0, 590); // Draws the grid lines (21+11 = 32 lines)
 
-	glBindVertexArray(vaoIDs[3]); 
+
+	mat4 Modelv;
+    Modelv = Translate( -150 , 33, 0 );
+    mat4 instance1 = Modelv * Scale( 120, 40, 120);
+    glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * instance1 );
+    glBindVertexArray(vaoIDs[3]);
 	glDrawArrays(GL_TRIANGLES, 0, 36); 
 
 	glutSwapBuffers();
