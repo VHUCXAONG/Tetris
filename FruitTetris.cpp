@@ -96,6 +96,7 @@ vec4 green  = vec4(0.0, 1.0, 0.0, 1.0);
 vec4 white  = vec4(1.0, 1.0, 1.0, 1.0);
 vec4 black  = vec4(0.0, 0.0, 0.0, 1.0); 
 vec4 blue 	= vec4(0.0, 0.0, 1.0, 1.0);
+vec4 grey   = vec4(0.5, 0.5, 0.5, 1.0);
 vec4 color[6] = {orange, purple, red, yellow, green, blue};
 //board[x][y] represents whether the cell (x,y) is occupied
 bool board[10][20]; 
@@ -112,6 +113,10 @@ GLuint vColor;
 // locations of uniform variables in shader program
 GLuint locxsize;
 GLuint locysize;
+
+
+vec4 newcolours[24 * 6];
+vec4 tmpcolours[24 * 6];
 
 // VAO and VBO
 GLuint vaoIDs[3]; // One VAO for each object: the grid, the board, the current piece
@@ -161,6 +166,7 @@ void DrawLast()
 
 int updatetile()
 {
+	bool isCo = false;
 	if (end)
 		return 0;
 	// Bind the VBO containing current tile vertex positions
@@ -172,25 +178,38 @@ int updatetile()
 	{
 		GLfloat x = tilepos.x + tile[i].x;
 		GLfloat y = tilepos.y + tile[i].y;
-		if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0)//collision happens
+		// if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0)//collision happens
+		// {
+		// 	flag = 1;
+		// 	for (int j = 0; j < 4; j++)
+		// 	{
+		// 		board[(int)last_pos[j].x][(int)last_pos[j].y] = true;
+		// 	}
+		// 	if (last_tile.y != tilepos.y)//drop to the bottom, should create new tile
+		// 	{
+		// 		tilepos = last_tile;
+		// 		settile();
+		// 		return 1;
+		// 	}
+		// 	//can still drop down
+		// 	// tilepos = last_tile;
+		// 	// return 2
+		// 	isCo = true;
+		// 	break;
+		// }
+		if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y > 19)
 		{
-			flag = 1;
-			for (int j = 0; j < 4; j++)
-			{
-				board[(int)last_pos[j].x][(int)last_pos[j].y] = true;
-			}
-			if (last_tile.y != tilepos.y)//drop to the bottom, should create new tile
-			{
-				tilepos = last_tile;
-				settile();
-				return 1;
-			}
-			//can still drop down
-			tilepos = last_tile;
-			return 2;
+			isCo = true;
+			break;
 		}
-
 	}
+	cout << isCo;
+	if (isCo)
+		for (int i = 0; i < 36; i++)
+			newcolours[i] = grey;
+	else
+		for (int i = 0; i < 36; i++)
+			newcolours[i] = grey;
 	flag = 1;
 	// For each of the 4 'cells' of the tile,
 	for (int i = 0; i < 4; i++) 
@@ -219,7 +238,11 @@ int updatetile()
 
 		// Put new data in the VBO
 		glBufferSubData(GL_ARRAY_BUFFER, i*36*sizeof(vec4), 36*sizeof(vec4), newpoints); 
+		//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours);
 	}
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindVertexArray(0);
 	return 0;
@@ -242,43 +265,61 @@ int updatetile()
 // }
 
 // Called at the start of play and every time a tile is placed
-vec4 newcolours[24 * 6];
+
 void newtile()
 {
 	mode = rand() % mode_type;//get random shape
 	cur_index = mode * 4 + rand()%4; 
 	//vec3 max = GetTop(cur_index);
 	int x = (int)(((-120 - armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) - 33.0) / 33.0);
-	int y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0);
+	int y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0) + 1;
 	tilepos = vec2(x, y);
 	last_tile = tilepos;
 	flag = 0;
 	// Update the geometry VBO of current tile
 	for (int i = 0; i < 4; i++)
 		tile[i] = allRotationsLshape[cur_index][i]; // Get the 4 pieces of the new tile
+	// for (int i = 0; i < 4; i++)
+	// {
+	// 	GLfloat x = tilepos.x + tile[i].x;
+	// 	GLfloat y = tilepos.y + tile[i].y;
+	// 	if (board[(int)x][(int)y] == true)
+	// 		end = true;
+	// }
+	bool flag1 = true;
 	for (int i = 0; i < 4; i++)
 	{
 		GLfloat x = tilepos.x + tile[i].x;
 		GLfloat y = tilepos.y + tile[i].y;
 		if (board[(int)x][(int)y] == true)
-			end = true;
+		{
+			flag1 = false;
+			break;
+		}
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		int c = rand() % 5;
+			for (int j = i * 36; j < (i + 1) * 36; j++)
+				tmpcolours[j] = color[c];
+		if (!flag1)
+			for (int j = i * 36; j < (i + 1) * 36; j++)
+				newcolours[j] = grey;
+		else
+			for (int j = i * 36; j < (i + 1) * 36; j++)
+				newcolours[j] = tmpcolours[j];
 	}
 	if (!end)
 		updatetile();
 	else
 		DrawLast();
 		// Update the color VBO of current tile
-	for (int i = 0; i < 4; i++)
-	{
-		int c = rand() % 5;
-		for (int j = i * 36; j < (i + 1) * 36; j++)
-			newcolours[j] = color[c]; 
-	}
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	// glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
+	// glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
+	// glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glBindVertexArray(0);
+	// glBindVertexArray(0);
 }
 //-------------------------------------------------------------------------------------------------------------------
 void CreateCube(vector<vec4> &bp, int i, int j)
@@ -805,6 +846,13 @@ void special(int key, int x, int y)
 
 //-------------------------------------------------------------------------------------------------------------------
 
+void updateArm()
+{
+	tilepos.x = (int)(((-120 - armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) - 33.0) / 33.0);
+	tilepos.y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0) + 1;
+	updatetile();
+}
+
 // Handles standard keypresses
 void keyboard(unsigned char key, int x, int y)
 {
@@ -821,15 +869,19 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'w':
 			armtheta -= 2;
+			updateArm();
 			break;
 		case 's':
 			armtheta += 2;
+			updateArm();
 			break;
 		case 'a':
 			armphi -= 2;
+			updateArm();
 			break;
 		case 'd':
 			armphi += 2;
+			updateArm();
 			break;
 	}
 	glutPostRedisplay();
