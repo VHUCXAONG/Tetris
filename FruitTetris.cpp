@@ -20,7 +20,12 @@ Modified in Sep 2014 by Honghua Li (honghual@sfu.ca).
 #include <ctime>
 #include <vector>
 #include <math.h>
+#include <GL/glew.h>
+#include <GL/glu.h> 
 using namespace std;
+
+char text[40] = "Time: ";
+char over[40] = "Game Over";
 
 int count = 0;
 bool beginTimer;
@@ -136,43 +141,45 @@ GLuint vao2[3];
 void settile();
 void newtile();
 void Remove(int x, int y);
-void DrawLast()
-{
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]);
-	for (int i = 0; i < 4; i++) 
-	{
+// void DrawLast()
+// {
+// 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]);
+// 	for (int i = 0; i < 4; i++) 
+// 	{
 
-		// Calculate the grid coordinates of the cell
-		GLfloat x = tilepos.x + tile[i].x;
-		last_pos[i].x = x;
-		GLfloat y = tilepos.y + tile[i].y;
-		last_pos[i].y = y;
-		board[(int)x][(int)y] = true;
-		// Create the 4 corners of the square - these vertices are using location in pixels
-		// These vertices are later converted by the vertex shader
-		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1); 
-		vec4 p2 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
-		vec4 p3 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1);
-		vec4 p4 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
-		vec4 p5 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1); 
-		vec4 p6 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
-		vec4 p7 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1);
-		vec4 p8 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
+// 		// Calculate the grid coordinates of the cell
+// 		GLfloat x = tilepos.x + tile[i].x;
+// 		last_pos[i].x = x;
+// 		GLfloat y = tilepos.y + tile[i].y;
+// 		last_pos[i].y = y;
+// 		board[(int)x][(int)y] = true;
+// 		// Create the 4 corners of the square - these vertices are using location in pixels
+// 		// These vertices are later converted by the vertex shader
+// 		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1); 
+// 		vec4 p2 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
+// 		vec4 p3 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1);
+// 		vec4 p4 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
+// 		vec4 p5 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1); 
+// 		vec4 p6 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
+// 		vec4 p7 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1);
+// 		vec4 p8 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
 
-		// Two points are used by two triangles each
-		vec4 newpoints[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
+// 		// Two points are used by two triangles each
+// 		vec4 newpoints[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
 
-		// Put new data in the VBO
-		glBufferSubData(GL_ARRAY_BUFFER, i*36*sizeof(vec4), 36*sizeof(vec4), newpoints); 
-	}
+// 		// Put new data in the VBO
+// 		glBufferSubData(GL_ARRAY_BUFFER, i*36*sizeof(vec4), 36*sizeof(vec4), newpoints); 
+// 	}
 
-	glBindVertexArray(0);
+// 	glBindVertexArray(0);
 	
-}
+// }
+int isCo[4] = {0, 0, 0, 0};
 
 int updatetile()
 {
-	int isCo[4] = {0, 0, 0, 0};
+	for (int i = 0; i < 4; i++)
+		isCo[i] = 0;
 	if (end)
 		return 0;
 	// Bind the VBO containing current tile vertex positions
@@ -180,13 +187,13 @@ int updatetile()
 	{
 		GLfloat x = tilepos.x + tile[i].x;
 		GLfloat y = tilepos.y + tile[i].y;
-		if ((board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0))
+		if ((board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0 || y > 19))
 		{
 			if (beginTimer)
 				isCo[i] = 1;
 			else
 			{
-				if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0)//collision happens
+				if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0 || y > 19)//collision happens
 				{
 					if (last_tile.y != tilepos.y)//drop to the bottom, should create new tile
 					{
@@ -245,26 +252,10 @@ int updatetile()
 	return 0;
 }
 
-//-------------------------------------------------------------------------------------------------------------------
-// vec3 GetTop(int index)
-// {
-// 	vec3 re = vec3(0, 0, 0);
-// 	for (int i = 0; i < 4; i++)
-// 	{
-// 		if (allRotationsLshape[index][i].y > re.x)
-// 			re.x = allRotationsLshape[index][i].y;
-// 		if (allRotationsLshape[index][i].x < re.y)
-// 			re.y = allRotationsLshape[index][i].x;
-// 		if (allRotationsLshape[index][i].x > re.z)
-// 			re.z = allRotationsLshape[index][i].x;
-// 	}
-// 	return re;
-// }
-
-// Called at the start of play and every time a tile is placed
 
 void newtile()
 {
+	timer = 0;
 	beginTimer = true;
 	mode = rand() % mode_type;//get random shape
 	cur_index = mode * 4 + rand()%4; 
@@ -277,13 +268,7 @@ void newtile()
 	// Update the geometry VBO of current tile
 	for (int i = 0; i < 4; i++)
 		tile[i] = allRotationsLshape[cur_index][i]; // Get the 4 pieces of the new tile
-	// for (int i = 0; i < 4; i++)
-	// {
-	// 	GLfloat x = tilepos.x + tile[i].x;
-	// 	GLfloat y = tilepos.y + tile[i].y;
-	// 	if (board[(int)x][(int)y] == true)
-	// 		end = true;
-	// }
+
 	for (int i = 0; i < 4; i++)
 	{
 		int c = rand() % 5;
@@ -292,15 +277,7 @@ void newtile()
 	}
 	if (!end)
 		updatetile();
-	else
-		DrawLast();
-		// Update the color VBO of current tile
-	
-	// glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
-	// glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
-	// glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// glBindVertexArray(0);
 }
 //-------------------------------------------------------------------------------------------------------------------
 void CreateCube(vector<vec4> &bp, int i, int j)
@@ -450,10 +427,9 @@ void OriginalCube(int i)
 	vec4 p7 = vec4 (1, 0, -0.5, 1);
 	vec4 p8 = vec4 (1, 1, -0.5, 1);
 	vec4 cubePosition[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
-	for (int j = 0; j < 6; j++)
+	for (int j = 0; j < 36; j++)
 	{
-		for (int k = 0; k < 6; k++)
-		cubeColor[j *6 + k] = color[j];
+		cubeColor[j] = yellow;
 	}
 
 	glBindVertexArray(vao2[i]);
@@ -509,6 +485,31 @@ void initCurrentTile()
 	glBufferData(GL_ARRAY_BUFFER, 6 * 24*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vColor);
+}
+
+void SetText(char *t)
+{
+	glDisable(GL_TEXTURE_2D); 
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	gluOrtho2D(0.0, xsize, 0.0, ysize);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glRasterPos2i(10, 600);
+	void * font = GLUT_BITMAP_9_BY_15;
+
+	int i = 0;
+	while (t[i])
+	{
+		glColor3d(1.0, 0.0, 0.0);
+		glutBitmapCharacter(font, t[i]);
+		i++;
+	}
+	glMatrixMode(GL_MODELVIEW); 
+	glPopMatrix();
+	glEnable(GL_TEXTURE_2D);
 }
 
 void init()
@@ -588,103 +589,6 @@ void rotate()
 	last_tile = tilepos;
 }
 
-// //-------------------------------------------------------------------------------------------------------------------
-
-// // Checks if the specified row (0 is the bottom 19 the top) is full
-// // If every cell in the row is occupied, it will clear that cell and everything above it will shift down one row
-// void checkfullrow(int row)
-// {
-// 	for (int i = 0; i < 10; i++)
-// 		if (board[i][row] == false)
-// 			return;
-// 	for (int i = 0; i < 10; i++)
-// 		Remove(i, row);
-// }
-
-
-// bool CheckSameColor(int x1, int y1, int x2, int y2)
-// {	
-// 	if (x2 < 0 || x2 > 9 || y2 < 0 || y2 > 19)
-// 		return false;
-// 	int x = x1 * 6 + y1 * 60;
-// 	int y = x2 * 6 + y2 * 60;
-// 	if (board[x1][y1] && board[x2][y2]&&
-// 		(abs(boardcolours[x].x - boardcolours[y].x) < 0.0001) && (abs(boardcolours[x].y - boardcolours[y].y) < 0.0001)&&
-// 		(abs(boardcolours[x].z - boardcolours[y].z) < 0.0001) && (abs(boardcolours[x].w - boardcolours[y].w) < 0.0001))
-// 		return true;
-// 	return false;
-// }
-
-// void RemoveCol(int x, int y)
-// {
-// 	for (int i = y; i < 17; i++)
-// 	{
-// 		for (int j = 0;j < 6; j++)
-// 			boardcolours[x * 6 + i * 60 + j] = boardcolours[x * 6 + i * 60 + 180];
-// 		board[x][i] = board[x][i + 3];
-// 	}
-// 	board[x][19] = false;
-// 	board[x][18] = false;
-// 	board[x][17] = false;
-// }
-// void Remove(int x, int y)
-// {	
-// 	for (int i = y; i < 19; i++)
-// 	{
-// 		for (int j = 0;j < 6; j++)
-// 			boardcolours[x * 6 + i * 60 + j] = boardcolours[x * 6 + i * 60 + 60];
-// 		board[x][i] = board[x][i + 1];
-// 	}
-// 	board[x][19] = false;
-// }
-// //-------------------------------------------------------------------------------------------------------------------
-// void CheckRemove()
-// {
-// 	for (int i = 19; i >= 0; i--)
-// 		checkfullrow(i);
-
-// 	for (int i = 0; i < 10; i++)
-// 		for (int j = 0; j < 20; j++)
-// 		{
-// 			if (CheckSameColor(i, j, i - 1, j) && CheckSameColor(i, j, i + 1, j))
-// 			{
-// 				//cout << 1 <<endl;
-// 				Remove(i, j);
-// 				Remove(i - 1, j);
-// 				Remove(i + 1, j);
-// 				CheckRemove();
-// 				return;
-// 			}
-// 			if (CheckSameColor(i, j, i, j - 1) && CheckSameColor(i, j, i, j + 1))
-// 			{
-// 				//cout << 2 <<endl;
-// 				RemoveCol(i, j - 1);
-// 				CheckRemove();
-// 				return;
-// 			}
-// 			if (CheckSameColor(i, j, i - 1, j + 1) && CheckSameColor(i, j, i + 1, j - 1))
-// 			{
-// 				//cout << 3 <<endl;
-// 				Remove(i, j);
-// 				Remove(i - 1, j + 1);
-// 				Remove(i + 1, j - 1);
-// 				CheckRemove();
-// 				return;
-// 			}
-// 			if (CheckSameColor(i, j, i + 1, j + 1) && CheckSameColor(i, j, i - 1, j - 1))
-// 			{
-// 				//cout << 4 <<endl;
-// 				Remove(i, j);
-// 				Remove(i + 1, j + 1);
-// 				Remove(i - 1, j - 1);
-// 				CheckRemove();
-// 				return;
-// 			}
-
-// 		}
-// }
-// Places the current tile - update the board vertex colour VBO and the array maintaining occupied cells
-
 void settile()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
@@ -714,7 +618,7 @@ void settile()
 				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
 				glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &ncolour[0]);
 				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
-				glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), globolposition[(i + 10 * j) * 36]);
+				glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &globolposition[(i + 10 * j) * 36]);
 			}
 		}	
 	
@@ -745,7 +649,8 @@ void TimeControl()
 	if (beginTimer)
 	{
 		timer++;
-		if (timer > 5000)
+		text[6] = (9 - timer / 100) + '0';
+		if (timer > 900)
 		{
 			timer = 0;
 			beginTimer = false;
@@ -753,6 +658,12 @@ void TimeControl()
 	}
 	else
 	{
+		if (isCo[0] + isCo[1] +isCo[2] +isCo[3])
+		{
+			end = true;
+			return;
+		}
+		text[6] = '0';
 		count ++;
 		if (count > 50)
 		{
@@ -769,6 +680,7 @@ void TimeControl()
 void display()
 {
 	TimeControl();
+	
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	Camera();
@@ -810,6 +722,10 @@ void display()
 	glBindVertexArray(vao2[2]);
 	glDrawArrays(GL_TRIANGLES, 0, 36); 
 
+	if (!end)
+		SetText(text);
+	else
+		SetText(over);
 	glutSwapBuffers();
 }
 
@@ -839,21 +755,26 @@ void special(int key, int x, int y)
 		case GLUT_KEY_LEFT:
 			if (glutGetModifiers() == GLUT_ACTIVE_CTRL)
 				theta -= 5;
-			else{
+			else if (!beginTimer)
+			{
 				tilepos.x --;
 				updatetile();
 				last_tile = tilepos;
 			}
 			break;
 		case GLUT_KEY_DOWN:
-			tilepos.y --;
-			updatetile();
-			last_tile = tilepos;
+			if (!beginTimer)
+			{
+				tilepos.y --;
+				updatetile();
+				last_tile = tilepos;
+			}
 			break;
 		case GLUT_KEY_RIGHT:
 			if (glutGetModifiers() == GLUT_ACTIVE_CTRL)
 					theta += 5;
-			else{
+			else if (!beginTimer)
+			{
 				tilepos.x ++;
 				updatetile();
 				last_tile = tilepos;
@@ -889,19 +810,19 @@ void keyboard(unsigned char key, int x, int y)
 			restart();
 			break;
 		case 'w':
-			armtheta -= 2;
+			armphi += 2;
 			updateArm();
 			break;
 		case 's':
-			armtheta += 2;
-			updateArm();
-			break;
-		case 'a':
 			armphi -= 2;
 			updateArm();
 			break;
+		case 'a':
+			armtheta -= 2;
+			updateArm();
+			break;
 		case 'd':
-			armphi += 2;
+			armtheta += 2;
 			updateArm();
 			break;
 		case ' ':
