@@ -23,6 +23,8 @@ Modified in Sep 2014 by Honghua Li (honghual@sfu.ca).
 using namespace std;
 
 int count = 0;
+bool beginTimer;
+
 int mode; //kinds of the rotating shapes
 int mode_type = 6;
 int cur_index;//current index in rotation vec
@@ -41,11 +43,14 @@ GLfloat theta = 0;
 GLfloat armtheta = 0;
 GLfloat armphi = 0;
 float armlen = 400;
+float armthick = 25;
 
 GLfloat  zNear = 2, zFar = 3000;
 
 GLint model_view;
 GLint projection;
+
+int timer = 0;
 
 mat4 mv;
 // current tile
@@ -263,6 +268,7 @@ int updatetile()
 
 void newtile()
 {
+	beginTimer = true;
 	mode = rand() % mode_type;//get random shape
 	cur_index = mode * 4 + rand()%4; 
 	//vec3 max = GetTop(cur_index);
@@ -728,18 +734,35 @@ void restart()
 }
 //-------------------------------------------------------------------------------------------------------------------
 
+void TimeControl()
+{
+	if (beginTimer)
+	{
+		timer++;
+		if (timer > 500)
+		{
+			timer = 0;
+			beginTimer = false;
+		}
+	}
+	else
+	{
+		count ++;
+		if (count > 50)
+		{
+			count = 0;
+			tilepos.y --;
+			updatetile();
+			last_tile = tilepos;
+
+		}
+	}
+}
+
 // Draws the game
 void display()
 {
-	// count ++;
-	// if (count > 50)
-	// {
-	// 	count = 0;
-	// 	tilepos.y --;
-	// 	updatetile();
-	// 	last_tile = tilepos;
-
-	// }
+	TimeControl();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	Camera();
@@ -767,7 +790,7 @@ void display()
 
 	Modelv = Translate( -120, 33, 0);
 	mat4 M1 = Modelv * RotateZ(armtheta);
-	M = M1 * Scale(20, armlen, 20);
+	M = M1 * Scale(armthick, armlen, armthick);
 	glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * M );
 	glBindVertexArray(vao2[1]);
 	glDrawArrays(GL_TRIANGLES, 0, 36); 
@@ -776,7 +799,7 @@ void display()
 	float y = armlen * cos(armtheta * DegreesToRadians) + 33;
 	Modelv = Translate( x, y, 0);
 	M1 = Modelv * RotateZ(armphi);
-	M = M1 * Scale(armlen, 20, 20);
+	M = M1 * Scale(armlen, armthick, armthick);
 	glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * M );
 	glBindVertexArray(vao2[2]);
 	glDrawArrays(GL_TRIANGLES, 0, 36); 
@@ -837,9 +860,12 @@ void special(int key, int x, int y)
 
 void updateArm()
 {
-	tilepos.x = (int)(((-120 - armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) - 33.0) / 33.0);
-	tilepos.y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0) + 1;
-	updatetile();
+	if (beginTimer)
+	{
+		tilepos.x = (int)(((-120 - armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) - 33.0) / 33.0);
+		tilepos.y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0) + 1;
+		updatetile();
+	}
 }
 
 // Handles standard keypresses
@@ -871,6 +897,9 @@ void keyboard(unsigned char key, int x, int y)
 		case 'd':
 			armphi += 2;
 			updateArm();
+			break;
+		case ' ':
+			beginTimer = false;
 			break;
 	}
 	glutPostRedisplay();
