@@ -109,7 +109,6 @@ bool board[10][20];
 //An array containing the colour of each of the 10*20*2*3 vertices that make up the board
 //Initially, all will be set to black. As tiles are placed, sets of 6 vertices (2 triangles; 1 square)
 //will be set to the appropriate colour in this array before updating the corresponding VBO
-vec4 boardcolours[7200];
 
 // location of vertex attributes in the shader program
 GLuint vPosition;
@@ -122,6 +121,8 @@ GLuint locysize;
 
 vec4 newcolours[24 * 6];
 vec4 tmpcolours[24 * 6];
+vec4 globalcolours[10][20];
+vec4 globolposition[7200];
 
 // VAO and VBO
 GLuint vaoIDs[3]; // One VAO for each object: the grid, the board, the current piece
@@ -304,15 +305,15 @@ void newtile()
 //-------------------------------------------------------------------------------------------------------------------
 void CreateCube(vector<vec4> &bp, int i, int j)
 {
-	vec4 p1 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), 16.5, 1);
-	vec4 p2 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), 16.5, 1);
-	vec4 p3 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), 16.5, 1);
-	vec4 p4 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), 16.5, 1);
+	vec4 p1 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), 16.5, 1);
+	vec4 p2 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), 16.5, 1);
+	vec4 p3 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), 16.5, 1);
+	vec4 p4 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), 16.5, 1);
 
-	vec4 p5 = vec4(33.0 + (j * 33.0), 33.0 + (i * 33.0), -16.5, 1);
-	vec4 p6 = vec4(33.0 + (j * 33.0), 66.0 + (i * 33.0), -16.5, 1);
-	vec4 p7 = vec4(66.0 + (j * 33.0), 33.0 + (i * 33.0), -16.5, 1);
-	vec4 p8 = vec4(66.0 + (j * 33.0), 66.0 + (i * 33.0), -16.5, 1);
+	vec4 p5 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5, 1);
+	vec4 p6 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5, 1);
+	vec4 p7 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5, 1);
+	vec4 p8 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5, 1);
 	
 	bp.push_back(p1);
 	bp.push_back(p2);
@@ -410,8 +411,6 @@ void initGrid()
 void initBoard()
 {
 	vector<vec4> boardpoints;
-	for (int i = 0; i < 7200; i++)
-		boardcolours[i] = black; // Let the empty cells on the board be black
 	// Each cell is a square (2 triangles with 6 vertices)
 	for (int i = 0; i < 20; i++)
 		for (int j = 0; j < 10; j++)
@@ -515,7 +514,11 @@ void initCurrentTile()
 void init()
 {
 	srand(time(0));
-
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < 20; j++)
+			globalcolours[i][j] = vec4(0, 0, 0, 0);
+	// for (int i = 0; i < 7200; i++)
+	// 	globolposition[i] = ;
 	// Load shaders and use the shader program
 	GLuint program = InitShader("vshader.glsl", "fshader.glsl");
 	glUseProgram(program);
@@ -681,20 +684,40 @@ void rotate()
 // 		}
 // }
 // Places the current tile - update the board vertex colour VBO and the array maintaining occupied cells
+
 void settile()
 {
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+	glBufferData(GL_ARRAY_BUFFER, 7200*sizeof(vec4), NULL, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
+	glBufferData(GL_ARRAY_BUFFER, 7200*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
 	for (int i = 0; i < 4; i++) // set boardcolor as shape's color
 	{
-		GLfloat x = tilepos.x + tile[i].x;
-		GLfloat y = tilepos.y + tile[i].y;
-		int index = (x + y * 10) * 36;
-		for (int j = index; j < index + 36; j++)
-			boardcolours[j] = newcolours[i * 36];
-		board[(int)x][(int)y] = true;
+		vector <vec4> tmp;
+		int x = (int) (tilepos.x + tile[i].x);
+		int y = (int) (tilepos.y + tile[i].y);
+		board[x][y] = true;
+		globalcolours[x][y] = newcolours[i * 36];
+		CreateCube(tmp,x,y);
+		for (int j = 0; j < 36; j++)
+			globolposition[(x + 10 * y) * 36 + j] = tmp[j];
 	}
 	//CheckRemove();
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]); // Bind the VBO containing current tile vertex colours
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(boardcolours), boardcolours); // Put the colour data in the VBO
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < 20; j++)
+		{
+			if (globalcolours[i][j].w > 0)
+			{
+				vector<vec4> ncolour(36, globalcolours[i][j]);
+				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
+				glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &ncolour[0]);
+				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+				glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), globolposition[(i + 10 * j) * 36]);
+			}
+		}	
+	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);	
 	newtile();
 }
