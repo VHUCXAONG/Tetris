@@ -38,7 +38,7 @@ int cur_index;//current index in rotation vec
 int flag;
 bool end = false;
 
-vec3 last_pos[4] = {vec2(-1,-1,-1),vec2(-1,-1,-1),vec2(-1,-1,-1),vec2(-1,-1,-1)};
+vec3 last_pos[4] = {vec3(-1,-1,-1),vec3(-1,-1,-1),vec3(-1,-1,-1),vec3(-1,-1,-1)};
 vec3 last_tile;
 // xsize and ysize represent the window size - updated if window is reshaped to prevent stretching of the game
 int xsize = 720; 
@@ -49,6 +49,8 @@ GLfloat theta = 0;
 
 GLfloat armtheta = 0;
 GLfloat armphi = 0;
+GLfloat armbeta = 0;
+
 float armlen = 400;
 float armthick = 25;
 
@@ -65,38 +67,38 @@ vec3 tile[4]; // An array of 4 2d vectors representing displacement from a 'cent
 vec3 tilepos; // The position of the current tile using grid coordinates ((0,0) is the bottom left corner)
 
 // An array storing all possible orientations of all possible tiles
-// The 'tile' array will always be some element [i][j] of this array (an array of vec2)
-vec2 allRotationsLshape[24][4] = 
+// The 'tile' array will always be some element [i][j] of this array (an array of vec3)
+vec3 allRotationsLshape[24][4] = 
 	//I
-	{{vec2(0,0), vec2(-2,0), vec2(1, 0), vec2(-1, 0)},
-	{vec2(0, 0), vec2(0,-2), vec2(0, 1), vec2(0, -1)},
-	{vec2(0, 0), vec2(2, 0), vec2(-1,0), vec2(1,  0)},
-	{vec2(0, 0), vec2(0, 2), vec2(0, -1), vec2(0, 1)},
+	{{vec3(0,0,0), vec3(-2,0,0), vec3(1, 0,0), vec3(-1, 0,0)},
+	{vec3(0, 0,0), vec3(0,-2,0), vec3(0, 1,0), vec3(0, -1,0)},
+	{vec3(0, 0,0), vec3(2, 0,0), vec3(-1,0,0), vec3(1,  0,0)},
+	{vec3(0, 0,0), vec3(0, 2,0), vec3(0, -1,0), vec3(0, 1,0)},
 	//Right S
-	{vec2(0, 0), vec2(-1,-1), vec2(1, 0), vec2(0,-1)},
-	{vec2(0, 0), vec2(1,-1), vec2(0, 1), vec2(1,  0)},
-	{vec2(0, 0), vec2(1, 1), vec2(-1,0), vec2(0,  1)},
-	{vec2(0, 0), vec2(-1,1), vec2(0,-1), vec2(-1, 0)},
+	{vec3(0, 0,0), vec3(-1,-1,0), vec3(1, 0,0), vec3(0,-1,0)},
+	{vec3(0, 0,0), vec3(1,-1,0), vec3(0, 1,0), vec3(1,  0,0)},
+	{vec3(0, 0,0), vec3(1, 1,0), vec3(-1,0,0), vec3(0,  1,0)},
+	{vec3(0, 0,0), vec3(-1,1,0), vec3(0,-1,0), vec3(-1, 0,0)},
 	//Left L
-	{vec2(0, 0), vec2(-1,-1), vec2(1, 0), vec2(-1,0)},
-	{vec2(0, 0), vec2(1,-1), vec2(0, 1), vec2(0, -1)},
-	{vec2(0, 0), vec2(1, 1), vec2(-1,0), vec2(1,  0)},  
-	{vec2(0, 0), vec2(-1,1), vec2(0,-1), vec2(0,  1)},
+	{vec3(0, 0,0), vec3(-1,-1,0), vec3(1, 0,0), vec3(-1,0,0)},
+	{vec3(0, 0,0), vec3(1,-1,0), vec3(0, 1,0), vec3(0, -1,0)},
+	{vec3(0, 0,0), vec3(1, 1,0), vec3(-1,0,0), vec3(1,  0,0)},  
+	{vec3(0, 0,0), vec3(-1,1,0), vec3(0,-1,0), vec3(0,  1,0)},
 	//Left S
-	{vec2(0, 0), vec2(0,-1), vec2(-1,0), vec2(1, -1)},
-	{vec2(0, 0), vec2(1, 0), vec2(0,-1), vec2(1,  1)},
-	{vec2(0, 0), vec2(0, 1), vec2(1, 0), vec2(-1, 1)},
-	{vec2(0, 0), vec2(-1,0), vec2(0, 1), vec2(-1,-1)},
+	{vec3(0, 0,0), vec3(0,-1,0), vec3(-1,0,0), vec3(1, -1,0)},
+	{vec3(0, 0,0), vec3(1, 0,0), vec3(0,-1,0), vec3(1,  1,0)},
+	{vec3(0, 0,0), vec3(0, 1,0), vec3(1, 0,0), vec3(-1, 1,0)},
+	{vec3(0, 0,0), vec3(-1,0,0), vec3(0, 1,0), vec3(-1,-1,0)},
 	//Right L   
-	{vec2(0, 0), vec2(1,-1), vec2(-1,0), vec2(1,  0)},
-	{vec2(0, 0), vec2(1, 1), vec2(0,-1), vec2(0,  1)},
-	{vec2(0 ,0), vec2(-1,1), vec2(1, 0), vec2(-1, 0)},
-	{vec2(0, 0), vec2(-1,-1), vec2(0, 1), vec2(0,-1)},
+	{vec3(0, 0,0), vec3(1,-1,0), vec3(-1,0,0), vec3(1,  0,0)},
+	{vec3(0, 0,0), vec3(1, 1,0), vec3(0,-1,0), vec3(0,  1,0)},
+	{vec3(0 ,0,0), vec3(-1,1,0), vec3(1, 0,0), vec3(-1, 0,0)},
+	{vec3(0, 0,0), vec3(-1,-1,0), vec3(0, 1,0), vec3(0,-1,0)},
 	//T
-	{vec2(0, 0), vec2(0, 1), vec2(-1,0), vec2(1,  0)},
-	{vec2(0, 0), vec2(-1,0), vec2(0, 1), vec2(0, -1)},
-	{vec2(0, 0), vec2(0,-1), vec2(-1,0), vec2(1,  0)},
-	{vec2(0, 0), vec2(1, 0), vec2(0,-1), vec2(0,  1)}};
+	{vec3(0, 0,0), vec3(0, 1,0), vec3(-1,0,0), vec3(1,  0,0)},
+	{vec3(0, 0,0), vec3(-1,0,0), vec3(0, 1,0), vec3(0, -1,0)},
+	{vec3(0, 0,0), vec3(0,-1,0), vec3(-1,0,0), vec3(1,  0,0)},
+	{vec3(0, 0,0), vec3(1, 0,0), vec3(0,-1,0), vec3(0,  1,0)}};
 
 
 // colors
@@ -130,8 +132,10 @@ GLuint locysize;
 
 vec4 newcolours[24 * 6];
 vec4 tmpcolours[24 * 6];
-vec4 globalcolours[10][20];
-vec4 globolposition[7200];
+
+
+vector<vec4> globalcolours;
+vector<vec4> globolposition;
 
 // VAO and VBO
 GLuint vaoIDs[3]; // One VAO for each object: the grid, the board, the current piece
@@ -148,6 +152,80 @@ void Remove(int x, int y);
 
 int isCo[4] = {0, 0, 0, 0};
 
+
+void CreateCube(vector<vec4> &bp, int i, int j, int k, int type)
+{
+	vec4 p1, p2, p3, p4, p5, p6, p7, p8;
+	if (type)
+	{
+		int index = k - (N - 3) / 2;
+		//cout << index <<endl;
+		p1 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
+		p2 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
+		p3 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
+		p4 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
+
+		p5 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * (index - 1), 1);
+		p6 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * (index - 1), 1);
+		p7 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * (index - 1), 1);
+		p8 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * (index - 1), 1);
+	}
+	else
+	{
+		int index = k - N / 2 + 1;
+		p1 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * index, 1);
+		p2 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * index, 1);
+		p3 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * index, 1);
+		p4 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * index, 1);
+		p5 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * (index - 1), 1);
+		p6 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * (index - 1), 1);
+		p7 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * (index - 1), 1);
+		p8 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * (index - 1), 1);
+	}
+
+	bp.push_back(p1);
+	bp.push_back(p2);
+	bp.push_back(p3);
+	bp.push_back(p2);
+	bp.push_back(p3);
+	bp.push_back(p4);
+
+	bp.push_back(p3);
+	bp.push_back(p4);
+	bp.push_back(p7);
+	bp.push_back(p4);
+	bp.push_back(p7);
+	bp.push_back(p8);
+
+	bp.push_back(p5);
+	bp.push_back(p6);
+	bp.push_back(p7);
+	bp.push_back(p6);
+	bp.push_back(p7);
+	bp.push_back(p8);
+
+	bp.push_back(p1);
+	bp.push_back(p2);
+	bp.push_back(p5);
+	bp.push_back(p2);
+	bp.push_back(p5);
+	bp.push_back(p6);
+
+	bp.push_back(p2);
+	bp.push_back(p4);
+	bp.push_back(p6);
+	bp.push_back(p6);
+	bp.push_back(p4);
+	bp.push_back(p8);
+
+	bp.push_back(p1);
+	bp.push_back(p3);
+	bp.push_back(p5);
+	bp.push_back(p5);
+	bp.push_back(p3);
+	bp.push_back(p7);
+}
+
 int updatetile()
 {
 	for (int i = 0; i < 4; i++)
@@ -157,16 +235,18 @@ int updatetile()
 	// Bind the VBO containing current tile vertex positions
 	for (int i = 0; i < 4; i++)
 	{
-		GLfloat x = tilepos.x + tile[i].x;
-		GLfloat y = tilepos.y + tile[i].y;
-
-		if ((board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0 || y > 19))
+		int x = (int)(tilepos.x + tile[i].x);
+		int y = (int)(tilepos.y + tile[i].y);
+		int z = (int)(tilepos.z + tile[i].z);
+		cout << "enter"<<endl;
+		if ((x < 0 || x >9 ||y < 0 || y > 19 || z < 0 || z >= N || board[z * 200 + y * 10 + x] == true))
 		{
+			cout << "after"<<endl;
 			if (beginTimer)
 				isCo[i] = 1;
 			else
 			{
-				if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0 || y > 19)//collision happens
+				if ((x < 0 || x >9 ||y < 0 || y > 19 || z < 0 || z >= N || board[z * 200 + y * 10 + x] == true))
 				{
 					if (last_tile.y != tilepos.y)//drop to the bottom, should create new tile
 					{
@@ -187,33 +267,24 @@ int updatetile()
 		else
 			newcolours[i] = tmpcolours[i];
 	flag = 1;
-	// For each of the 4 'cells' of the tile,
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]); 
 	for (int i = 0; i < 4; i++) 
 	{
-
+		vec4 p1, p2, p3, p4, p5, p6, p7, p8;
 		// Calculate the grid coordinates of the cell
 		GLfloat x = tilepos.x + tile[i].x;
 		last_pos[i].x = x;
 		GLfloat y = tilepos.y + tile[i].y;
 		last_pos[i].y = y;
+		GLfloat z = tilepos.z + tile[i].z;
+		last_pos[i].z = z;
+		//cout <<x <<" "<<y<<" "<<z<<endl; 
 		// Create the 4 corners of the square - these vertices are using location in pixels
 		// These vertices are later converted by the vertex shader
-		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1); 
-		vec4 p2 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
-		vec4 p3 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1);
-		vec4 p4 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), 16.5, 1);
-		vec4 p5 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1); 
-		vec4 p6 = vec4(33.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
-		vec4 p7 = vec4(66.0 + (x * 33.0), 33.0 + (y * 33.0), -16.5, 1);
-		vec4 p8 = vec4(66.0 + (x * 33.0), 66.0 + (y * 33.0), -16.5, 1);
-
-		// Two points are used by two triangles each
-		vec4 newpoints[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
-
-
+		vector <vec4> newpoints;
+		CreateCube(newpoints,x,y,z,type);
 		// Put new data in the VBO
-		glBufferSubData(GL_ARRAY_BUFFER, i*36*sizeof(vec4), 36*sizeof(vec4), newpoints); 
+		glBufferSubData(GL_ARRAY_BUFFER, i*36*sizeof(vec4), 36*sizeof(vec4), &newpoints[0]); 
 		//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours);
 	}
 	glBindVertexArray(0);
@@ -235,7 +306,8 @@ void newtile()
 	//vec3 max = GetTop(cur_index);
 	int x = (int)(((-120 - armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) - 33.0) / 33.0);
 	int y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0) + 1;
-	tilepos = vec2(x, y);
+	int z = 0;
+	tilepos = vec3(x, y, z);
 	last_tile = tilepos;
 	flag = 0;
 	// Update the geometry VBO of current tile
@@ -253,77 +325,7 @@ void newtile()
 
 }
 //-------------------------------------------------------------------------------------------------------------------
-void CreateCube(vector<vec4> &bp, int i, int j, int k, int type)
-{
-	vec4 p1, p2, p3, p4, p5, p6, p7, p8;
-	if (type)
-	{
-		int index = k - (N - 3) / 2;
-		p1 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
-		p2 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
-		p3 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
-		p4 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
 
-		p5 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * (index - 1) * 33.0, 1);
-		p6 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * (index - 1) * 33.0, 1);
-		p7 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * (index - 1) * 33.0, 1);
-		p8 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * (index - 1) * 33.0, 1);
-	}
-	else
-	{
-		int index = k - N / 2 + 1;
-		p1 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * index, 1);
-		p2 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * index, 1);
-		p3 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * index, 1);
-		p4 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * index, 1);
-		p5 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * (index - 1) * 33.0, 1);
-		p6 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * (index - 1) * 33.0, 1);
-		p7 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * (index - 1) * 33.0, 1);
-		p8 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * (index - 1) * 33.0, 1);
-	}
-
-	bp.push_back(p1);
-	bp.push_back(p2);
-	bp.push_back(p3);
-	bp.push_back(p2);
-	bp.push_back(p3);
-	bp.push_back(p4);
-
-	bp.push_back(p3);
-	bp.push_back(p4);
-	bp.push_back(p7);
-	bp.push_back(p4);
-	bp.push_back(p7);
-	bp.push_back(p8);
-
-	bp.push_back(p5);
-	bp.push_back(p6);
-	bp.push_back(p7);
-	bp.push_back(p6);
-	bp.push_back(p7);
-	bp.push_back(p8);
-
-	bp.push_back(p1);
-	bp.push_back(p2);
-	bp.push_back(p5);
-	bp.push_back(p2);
-	bp.push_back(p5);
-	bp.push_back(p6);
-
-	bp.push_back(p2);
-	bp.push_back(p4);
-	bp.push_back(p6);
-	bp.push_back(p6);
-	bp.push_back(p4);
-	bp.push_back(p8);
-
-	bp.push_back(p1);
-	bp.push_back(p3);
-	bp.push_back(p5);
-	bp.push_back(p5);
-	bp.push_back(p3);
-	bp.push_back(p7);
-}
 
 void initGrid()
 {
@@ -552,9 +554,9 @@ void SetText(char *t)
 void init()
 {
 	srand(time(0));
-	for (int i = 0; i < 10; i++)
-		for (int j = 0; j < 20; j++)
-			globalcolours[i][j] = vec4(0, 0, 0, 0);
+
+	globolposition = vector<vec4>(7200 * N);
+	globalcolours = vector<vec4>(200 * N);
 	// for (int i = 0; i < 7200; i++)
 	// 	globolposition[i] = ;
 	// Load shaders and use the shader program
@@ -593,7 +595,7 @@ void init()
 bool CheckRotate()
 {
 	int next = cur_index + 1;
-	vec2 next_tile[4];
+	vec3 next_tile[4];
 	if (next >= (mode + 1) * 4 )
 		next = mode * 4;
 	for (int i = 0; i < 4; i++)
@@ -602,9 +604,10 @@ bool CheckRotate()
 	}
 	for (int i = 0; i < 4; i++)
 	{
-		GLfloat x = tilepos.x + next_tile[i].x;
-		GLfloat y = tilepos.y + next_tile[i].y;
-		if (board[(int)x][(int)y] == true || x < 0 || x > 9 ||y < 0 || y > 19)//collision happens
+		int x = (int) (tilepos.x + next_tile[i].x);
+		int y = (int) (tilepos.y + next_tile[i].y);
+		int z = (int) (tilepos.z + next_tile[i].z);
+		if ((x < 0 || x >9 ||y < 0 || y > 19 || z < 0 || z >= N || board[z * 200 + y * 10 + x] == true))
 		{
 			return false;
 		}
@@ -628,6 +631,7 @@ void rotate()
 
 void settile()
 {
+	cout << "fdf"<<endl;
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
 	glBufferData(GL_ARRAY_BUFFER, 7200*sizeof(vec4), NULL, GL_STATIC_DRAW);
 
@@ -638,24 +642,29 @@ void settile()
 		vector <vec4> tmp;
 		int x = (int) (tilepos.x + tile[i].x);
 		int y = (int) (tilepos.y + tile[i].y);
-		board[x][y] = true;
-		globalcolours[x][y] = newcolours[i * 36];
-		CreateCube(tmp,x,y);
+		int z = (int) (tilepos.z + tile[i].z);
+		board[z * 200 + y * 10 + x] = true;
+		globalcolours[z * 200 + y * 10 + x] = newcolours[i * 36];
+		CreateCube(tmp,x,y,z,type);
 		for (int j = 0; j < 36; j++)
-			globolposition[(x + 10 * y) * 36 + j] = tmp[j];
+			globolposition[z * 7200 + (x + 10 * y) * 36 + j] = tmp[j];
 	}
 	//CheckRemove();
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
+
 	for (int i = 0; i < 10; i++)
 		for (int j = 0; j < 20; j++)
 		{
-			if (globalcolours[i][j].w > 0)
+			for (int k = 0; k < N; k++)
 			{
-				vector<vec4> ncolour(36, globalcolours[i][j]);
-				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
-				glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &ncolour[0]);
-				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
-				glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &globolposition[(i + 10 * j) * 36]);
+				if (globalcolours[k * 200 + j * 10 + i].w > 0)
+				{
+					vector<vec4> ncolour(36, globalcolours[k * 200 + j * 10 + i]);
+					glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
+					glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &ncolour[0]);
+					glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+					glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &globolposition[k * 7200 + (i + 10 * j) * 36]);
+				}
 			}
 		}	
 	
