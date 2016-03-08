@@ -25,7 +25,7 @@ Modified in Sep 2014 by Honghua Li (honghual@sfu.ca).
 using namespace std;
 
 int N;
-int type;
+
 char text[40] = "Time: ";
 char over[40] = "Game Over";
 
@@ -38,8 +38,8 @@ int cur_index;//current index in rotation vec
 int flag;
 bool end = false;
 
-vec3 last_pos[4] = {vec2(-1,-1,-1),vec2(-1,-1,-1),vec2(-1,-1,-1),vec2(-1,-1,-1)};
-vec3 last_tile;
+vec2 last_pos[4] = {vec2(-1,-1),vec2(-1,-1),vec2(-1,-1),vec2(-1,-1)};
+vec2 last_tile;
 // xsize and ysize represent the window size - updated if window is reshaped to prevent stretching of the game
 int xsize = 720; 
 int ysize = 720;
@@ -61,8 +61,8 @@ int timer = 0;
 
 mat4 mv;
 // current tile
-vec3 tile[4]; // An array of 4 2d vectors representing displacement from a 'center' piece of the tile, on the grid
-vec3 tilepos; // The position of the current tile using grid coordinates ((0,0) is the bottom left corner)
+vec2 tile[4]; // An array of 4 2d vectors representing displacement from a 'center' piece of the tile, on the grid
+vec2 tilepos = vec2(5, 19); // The position of the current tile using grid coordinates ((0,0) is the bottom left corner)
 
 // An array storing all possible orientations of all possible tiles
 // The 'tile' array will always be some element [i][j] of this array (an array of vec2)
@@ -111,10 +111,8 @@ vec4 blue 	= vec4(0.0, 0.0, 1.0, 1.0);
 vec4 grey   = vec4(0.5, 0.5, 0.5, 1.0);
 vec4 color[6] = {orange, purple, red, yellow, green, blue};
 //board[x][y] represents whether the cell (x,y) is occupied
-vector<bool> board;
-int board_x;
-int board_y;
-int board_z;
+bool board[10][20]; 
+
 //An array containing the colour of each of the 10*20*2*3 vertices that make up the board
 //Initially, all will be set to black. As tiles are placed, sets of 6 vertices (2 triangles; 1 square)
 //will be set to the appropriate colour in this array before updating the corresponding VBO
@@ -128,7 +126,8 @@ GLuint locxsize;
 GLuint locysize;
 
 
-vec4 newcolours[24 * 6];
+//vec4 newcolours[24 * 6];
+vector<vec4> newcolours(24*6*1);
 vec4 tmpcolours[24 * 6];
 vec4 globalcolours[10][20];
 vec4 globolposition[7200];
@@ -159,7 +158,6 @@ int updatetile()
 	{
 		GLfloat x = tilepos.x + tile[i].x;
 		GLfloat y = tilepos.y + tile[i].y;
-
 		if ((board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0 || y > 19))
 		{
 			if (beginTimer)
@@ -253,35 +251,18 @@ void newtile()
 
 }
 //-------------------------------------------------------------------------------------------------------------------
-void CreateCube(vector<vec4> &bp, int i, int j, int k, int type)
+void CreateCube(vector<vec4> &bp, int i, int j)
 {
-	vec4 p1, p2, p3, p4, p5, p6, p7, p8;
-	if (type)
-	{
-		int index = k - (N - 3) / 2;
-		p1 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
-		p2 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
-		p3 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
-		p4 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * index, 1);
+	vec4 p1 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), 16.5, 1);
+	vec4 p2 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), 16.5, 1);
+	vec4 p3 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), 16.5, 1);
+	vec4 p4 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), 16.5, 1);
 
-		p5 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * (index - 1) * 33.0, 1);
-		p6 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * (index - 1) * 33.0, 1);
-		p7 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5 + 33.0 * (index - 1) * 33.0, 1);
-		p8 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5 + 33.0 * (index - 1) * 33.0, 1);
-	}
-	else
-	{
-		int index = k - N / 2 + 1;
-		p1 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * index, 1);
-		p2 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * index, 1);
-		p3 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * index, 1);
-		p4 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * index, 1);
-		p5 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * (index - 1) * 33.0, 1);
-		p6 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * (index - 1) * 33.0, 1);
-		p7 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), 33.0 * (index - 1) * 33.0, 1);
-		p8 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), 33.0 * (index - 1) * 33.0, 1);
-	}
-
+	vec4 p5 = vec4(33.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5, 1);
+	vec4 p6 = vec4(33.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5, 1);
+	vec4 p7 = vec4(66.0 + (i * 33.0), 33.0 + (j * 33.0), -16.5, 1);
+	vec4 p8 = vec4(66.0 + (i * 33.0), 66.0 + (j * 33.0), -16.5, 1);
+	
 	bp.push_back(p1);
 	bp.push_back(p2);
 	bp.push_back(p3);
@@ -331,73 +312,26 @@ void initGrid()
 	vector<vec4> gridpoints; // Array containing the 64 points of the 32 total lines to be later put in the VBO
 	vector<vec4> gridcolours; // One colour per vertex
 	// Vertical lines 
-	if (type)
-	{
-		for (int i = 0; i < 11; i++)
+	for (int i = 0; i < 11; i++){
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, 16.5, 1));
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, 16.5, 1));
+		
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, -16.5, 1));
+		gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, -16.5, 1));
+		for (int j = 0; j < 21; j++)
 		{
-			for (int k = 0; k < (N + 1) / 2; k++)
-			{
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, 16.5 + 33.0 * k, 1));
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, 16.5 + 33.0 * k, 1));
-				
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, -16.5 - 33.0 * k, 1));
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, -16.5 - 33.0 * k, 1));
-			}
-			for (int j = 0; j < 21; j++)
-			{
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), 16.5 + 33.0 * (N - 1) / 2, 1));
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), -16.5 - 33.0 * (N - 1) / 2, 1));
-			}
-		}
-		// Horizontal lines
-		for (int i = 0; i < 21; i++)
-		{
-			for (int k = 0; k < (N + 1) / 2; k++)
-			{
-				gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), 16.5 + 33.0 * k, 1));
-				gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), 16.5 + 33.0 * k, 1));
-
-				gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), -16.5 - 33.0 * k, 1));
-				gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), -16.5 - 33.0 * k, 1));
-			}
+			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), 16.5, 1));
+			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), -16.5, 1));
 		}
 	}
-	else
-	{
-		for (int i = 0; i < 11; i++)
-		{
-			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0,  0, 1));
-			gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, 0, 1));
-			for (int k = 1; k <= N / 2; k++)
-			{
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0,  33.0 * k, 1));
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, 33.0 * k, 1));
-				
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0, -33.0 * k, 1));
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 693.0, -33.0 * k, 1));
-			}
-			for (int j = 0; j < 21; j++)
-			{
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), 33.0 * N / 2, 1));
-				gridpoints.push_back(vec4((33.0 + (33.0 * i)), 33.0 + (33.0 * j), -33.0 * N / 2, 1));
-			}
-		}
-		// Horizontal lines
-		for (int i = 0; i < 21; i++)
-		{
-			gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), 0, 1));
-			gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), 0, 1));
-			for (int k = 1; k <= N / 2; k++)
-			{
-				gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), 33.0 * k, 1));
-				gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), 33.0 * k, 1));
+	// Horizontal lines
+	for (int i = 0; i < 21; i++){
+		gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), 16.5, 1));
+		gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), 16.5, 1));
 
-				gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), -33.0 * k, 1));
-				gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), -33.0 * k, 1));
-			}
-		}
+		gridpoints.push_back(vec4(33.0, (33.0 + (33.0 * i)), -16.5, 1));
+		gridpoints.push_back(vec4(363.0, (33.0 + (33.0 * i)), -16.5, 1));
 	}
-
 	int size = gridpoints.size();
 	// Make all grid lines white
 	for (int i = 0; i < size; i++)
@@ -428,12 +362,12 @@ void initBoard()
 	// Each cell is a square (2 triangles with 6 vertices)
 	for (int i = 0; i < 20; i++)
 		for (int j = 0; j < 10; j++)
-			for (int k = 0; k < N; k++)
-				CreateCube(boardpoints, i, j, k, type);
+			CreateCube(boardpoints,i,j);
 
 	// Initially no cell is occupied
-	for (int i = 0; i < 200 * N; i++)
-		board.push_back(false);
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < 20; j++)
+			board[i][j] = false; 
 
 	int size = boardpoints.size();
 	// *** set up buffer objects
@@ -551,6 +485,7 @@ void SetText(char *t)
 
 void init()
 {
+	//newcolours = vector <vec4>(36 * 4 * N);
 	srand(time(0));
 	for (int i = 0; i < 10; i++)
 		for (int j = 0; j < 20; j++)
@@ -724,16 +659,15 @@ void display()
 
 	// glUniform1i(locxsize, xsize); // x and y sizes are passed to the shader program to maintain shape of the vertices on screen
 	// glUniform1i(locysize, ysize);
-	int lineNumber = (type) ? (64 * (N + 1) + 462) : (64 * N + 528);
 
 	glBindVertexArray(vaoIDs[1]); // Bind the VAO representing the grid cells (to be drawn first)
-	glDrawArrays(GL_TRIANGLES, 0, 200 * N * 36); // Draw the board (10*20*2 = 400 triangles)
+	glDrawArrays(GL_TRIANGLES, 0, 7200); // Draw the board (10*20*2 = 400 triangles)
 
 	glBindVertexArray(vaoIDs[2]); // Bind the VAO representing the current tile (to be drawn on top of the board)
 	glDrawArrays(GL_TRIANGLES, 0, 24 * 6); // Draw the current tile (8 triangles)
 
 	glBindVertexArray(vaoIDs[0]); // Bind the VAO representing the grid lines (to be drawn on top of everything else)
-	glDrawArrays(GL_LINES, 0, lineNumber); // Draws the grid lines (21+11 = 32 lines)
+	glDrawArrays(GL_LINES, 0, 590); // Draws the grid lines (21+11 = 32 lines)
 
 
 
@@ -883,11 +817,11 @@ int main(int argc, char **argv)
 {
 	if (argc != 2)
 	{
-		cout << "wrong command"<<endl;
+		cout << "wrong Command" <<endl;
 		return 0;
 	}
 	N = atoi(argv[1]);
-	type = (N % 2) ? 1 : 0;
+	cout << N <<endl;
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(xsize, ysize);
