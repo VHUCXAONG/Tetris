@@ -166,7 +166,7 @@ void DrawLast()
 
 int updatetile()
 {
-	bool isCo = false;
+	int isCo[4] = {0, 0, 0, 0};
 	if (end)
 		return 0;
 	// Bind the VBO containing current tile vertex positions
@@ -198,18 +198,13 @@ int updatetile()
 		// 	break;
 		// }
 		if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y > 19)
-		{
-			isCo = true;
-			break;
-		}
+			isCo[i] = 1;
 	}
-	cout << isCo;
-	if (isCo)
-		for (int i = 0; i < 36; i++)
+	for (int i = 0; i < 36 * 4; i++)
+		if (isCo[i / 36])
 			newcolours[i] = grey;
-	else
-		for (int i = 0; i < 36; i++)
-			newcolours[i] = grey;
+		else
+			newcolours[i] = tmpcolours[i];
 	flag = 1;
 	// For each of the 4 'cells' of the tile,
 	for (int i = 0; i < 4; i++) 
@@ -302,12 +297,6 @@ void newtile()
 		int c = rand() % 5;
 			for (int j = i * 36; j < (i + 1) * 36; j++)
 				tmpcolours[j] = color[c];
-		if (!flag1)
-			for (int j = i * 36; j < (i + 1) * 36; j++)
-				newcolours[j] = grey;
-		else
-			for (int j = i * 36; j < (i + 1) * 36; j++)
-				newcolours[j] = tmpcolours[j];
 	}
 	if (!end)
 		updatetile();
