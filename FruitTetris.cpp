@@ -818,11 +818,11 @@ void keyboard(unsigned char key, int x, int y)
 			updateArm();
 			break;
 		case 'a':
-			armtheta -= 2;
+			armtheta += 2;
 			updateArm();
 			break;
 		case 'd':
-			armtheta += 2;
+			armtheta -= 2;
 			updateArm();
 			break;
 		case ' ':
