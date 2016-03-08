@@ -175,35 +175,30 @@ int updatetile()
 	if (end)
 		return 0;
 	// Bind the VBO containing current tile vertex positions
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]); 
-	if (flag)
-		for (int i = 0; i < 4; i++)
-			board[(int)last_pos[i].x][(int)last_pos[i].y] = false;
 	for (int i = 0; i < 4; i++)
 	{
 		GLfloat x = tilepos.x + tile[i].x;
 		GLfloat y = tilepos.y + tile[i].y;
-		// if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0)//collision happens
-		// {
-		// 	flag = 1;
-		// 	for (int j = 0; j < 4; j++)
-		// 	{
-		// 		board[(int)last_pos[j].x][(int)last_pos[j].y] = true;
-		// 	}
-		// 	if (last_tile.y != tilepos.y)//drop to the bottom, should create new tile
-		// 	{
-		// 		tilepos = last_tile;
-		// 		settile();
-		// 		return 1;
-		// 	}
-		// 	//can still drop down
-		// 	// tilepos = last_tile;
-		// 	// return 2
-		// 	isCo = true;
-		// 	break;
-		// }
-		if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y > 19)
-			isCo[i] = 1;
+		if ((board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0))
+		{
+			if (beginTimer)
+				isCo[i] = 1;
+			else
+			{
+				if (board[(int)x][(int)y] == true || x < 0 || x >9 ||y < 0)//collision happens
+				{
+					if (last_tile.y != tilepos.y)//drop to the bottom, should create new tile
+					{
+						tilepos = last_tile;
+						settile();
+						return 1;
+					}
+					//can still drop down
+					tilepos = last_tile;
+					return 2;
+				}
+			}
+		}
 	}
 	for (int i = 0; i < 36 * 4; i++)
 		if (isCo[i / 36])
@@ -212,6 +207,7 @@ int updatetile()
 			newcolours[i] = tmpcolours[i];
 	flag = 1;
 	// For each of the 4 'cells' of the tile,
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]); 
 	for (int i = 0; i < 4; i++) 
 	{
 
@@ -220,7 +216,6 @@ int updatetile()
 		last_pos[i].x = x;
 		GLfloat y = tilepos.y + tile[i].y;
 		last_pos[i].y = y;
-		board[(int)x][(int)y] = true;
 		// Create the 4 corners of the square - these vertices are using location in pixels
 		// These vertices are later converted by the vertex shader
 		vec4 p1 = vec4(33.0 + (x * 33.0), 33.0 + (y * 33.0), 16.5, 1); 
@@ -240,6 +235,7 @@ int updatetile()
 		glBufferSubData(GL_ARRAY_BUFFER, i*36*sizeof(vec4), 36*sizeof(vec4), newpoints); 
 		//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours);
 	}
+	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[5]); // Bind the VBO containing current tile vertex colours
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newcolours), newcolours); // Put the colour data in the VBO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -287,17 +283,6 @@ void newtile()
 	// 	if (board[(int)x][(int)y] == true)
 	// 		end = true;
 	// }
-	bool flag1 = true;
-	for (int i = 0; i < 4; i++)
-	{
-		GLfloat x = tilepos.x + tile[i].x;
-		GLfloat y = tilepos.y + tile[i].y;
-		if (board[(int)x][(int)y] == true)
-		{
-			flag1 = false;
-			break;
-		}
-	}
 	for (int i = 0; i < 4; i++)
 	{
 		int c = rand() % 5;
@@ -572,7 +557,6 @@ bool CheckRotate()
 		next = mode * 4;
 	for (int i = 0; i < 4; i++)
 	{
-		board[(int)last_pos[i].x][(int)last_pos[i].y] = false;
 		next_tile[i] = allRotationsLshape[next][i];
 	}
 	for (int i = 0; i < 4; i++)
@@ -581,8 +565,6 @@ bool CheckRotate()
 		GLfloat y = tilepos.y + next_tile[i].y;
 		if (board[(int)x][(int)y] == true || x < 0 || x > 9 ||y < 0 || y > 19)//collision happens
 		{
-			for (int j = 0; j < 4; j++)
-				board[(int)last_pos[i].x][(int)last_pos[i].y] = true;
 			return false;
 		}
 	}
@@ -708,6 +690,7 @@ void settile()
 		int index = (x + y * 10) * 36;
 		for (int j = index; j < index + 36; j++)
 			boardcolours[j] = newcolours[i * 36];
+		board[(int)x][(int)y] = true;
 	}
 	//CheckRemove();
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]); // Bind the VBO containing current tile vertex colours
@@ -739,7 +722,7 @@ void TimeControl()
 	if (beginTimer)
 	{
 		timer++;
-		if (timer > 500)
+		if (timer > 5000)
 		{
 			timer = 0;
 			beginTimer = false;
