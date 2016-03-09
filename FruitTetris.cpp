@@ -118,7 +118,7 @@ vec4 yellow = vec4(1.0, 1.0, 0.0, 1.0);
 vec4 green  = vec4(0.0, 1.0, 0.0, 1.0);
 vec4 white  = vec4(1.0, 1.0, 1.0, 1.0);
 vec4 black  = vec4(0.0, 0.0, 0.0, 1.0); 
-vec4 blue 	= vec4(0.0, 0.0, 1.0, 1.0);
+vec4 blue 	= vec4(0.0, 1, 1, 1.0);
 vec4 grey   = vec4(0.5, 0.5, 0.5, 1.0);
 vec4 color[6] = {orange, purple, red, yellow, green, blue};
 //board[x][y] represents whether the cell (x,y) is occupied
@@ -485,7 +485,7 @@ void OriginalCube(int i)
 	vec4 cubePosition[36] = {p1, p2, p3, p2, p3, p4, p2, p6, p4, p6, p4, p8, p5, p6, p7, p6, p7, p8, p3, p4, p7, p4, p7, p8, p1, p2, p5, p2, p5, p6, p1, p5, p3, p5, p3, p7}; 
 	for (int j = 0; j < 36; j++)
 	{
-		cubeColor[j] = yellow;
+		cubeColor[j] = blue;
 	}
 
 	glBindVertexArray(vao2[i]);
@@ -593,8 +593,7 @@ void init()
 	initGrid();
 	initBoard();
 	initCurrentTile();
-	for (int i = 0; i < 3; i++)
-		OriginalCube(i);
+	OriginalCube(0);
 	// The location of the uniform variables in the shader program
 	locxsize = glGetUniformLocation(program, "xsize"); 
 	locysize = glGetUniformLocation(program, "ysize");
