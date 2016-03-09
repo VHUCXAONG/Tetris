@@ -144,7 +144,7 @@ vec4 tmpcolours[24 * 6];
 
 
 vector<vec4> globalcolours;
-vector<vec4> globolposition;
+vector<vec4> globalposition;
 
 // VAO and VBO
 GLuint vaoIDs[3]; // One VAO for each object: the grid, the board, the current piece
@@ -444,12 +444,13 @@ void initBoard()
 	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
 	vector<vec4> boardpoints;
 	// Each cell is a square (2 triangles with 6 vertices)
-	for (int i = 0; i < 20; i++)
-		for (int j = 0; j < 10; j++)
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j < 20; j++)
 			for (int k = 0; k < N; k++)
 				CreateCube(boardpoints, i, j, k, type);
 
 	// Initially no cell is occupied
+	board.clear();
 	for (int i = 0; i < 200 * N; i++)
 		board.push_back(false);
 
@@ -505,12 +506,12 @@ void Camera()
 	vec4 eye;
 
 	eye[0] = R * cos(theta * DegreesToRadians) + 33 * 6;
-	eye[1] = (33 + 693) / 2;
+	eye[1] = 693;
 	eye[2] = R * sin(theta * DegreesToRadians);
 
     vec4  at( (33 + 363) / 2, (33 + 693) / 2, 0.0, 1.0 );
-    vec4  up( 0.0, 1.0, 0.0, 1.0 );	
-
+    vec4  up( -R * cos(theta * DegreesToRadians), R * R / 330 - 330, -R * sin(theta * DegreesToRadians), 1.0 );	
+    //vec4 up(0,1,0,0);
     mv = LookAt(eye, at, up);
 
     GLdouble ratio = ysize / xsize;
@@ -573,7 +574,7 @@ void init()
 	for (int i = 0; i < 4; i++)
 		last_pos[i] = vec3(-1,-1,-1);
 
-	globolposition = vector<vec4>(7200 * N);
+	globalposition = vector<vec4>(7200 * N);
 	globalcolours = vector<vec4>(200 * N);
 	// for (int i = 0; i < 7200; i++)
 	// 	globolposition[i] = ;
@@ -664,7 +665,7 @@ void settile()
 		globalcolours[z * 200 + y * 10 + x] = newcolours[i * 36];
 		CreateCube(tmp,x,y,z,type);
 		for (int j = 0; j < 36; j++)
-			globolposition[z * 7200 + (x + 10 * y) * 36 + j] = tmp[j];
+			globalposition[z * 7200 + (x + 10 * y) * 36 + j] = tmp[j];
 	}
 	//CheckRemove();
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
@@ -676,16 +677,14 @@ void settile()
 			{
 				if (board[k * 200 + j * 10 + i])
 				{
-					cout <<"true"<<endl;
 					vector<vec4> ncolour(36, globalcolours[k * 200 + j * 10 + i]);
 					glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
-					glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &ncolour[0]);
+					glBufferSubData(GL_ARRAY_BUFFER, (7200 * k + (i + 10 * j) * 36) * sizeof(vec4), 36 * sizeof(vec4), &ncolour[0]);
 					glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
-					glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &globolposition[k * 7200 + (i + 10 * j) * 36]);
+					glBufferSubData(GL_ARRAY_BUFFER, (7200 * k + (i + 10 * j) * 36) * sizeof(vec4), 36 * sizeof(vec4), &globalposition[k * 7200 + (i + 10 * j) * 36]);
 				}
 			}
 		}	
-	cout << "------------------"<<endl;
 	glBindBuffer(GL_ARRAY_BUFFER, 0);	
 	newtile();
 }
@@ -919,14 +918,20 @@ void keyboard(unsigned char key, int x, int y)
 			beginTimer = false;
 			break;
 		case 'm':
-			tilepos.z ++;
-			updatetile();
-			last_tile = tilepos;
+			if (!beginTimer)
+			{
+				tilepos.z ++;
+				updatetile();
+				last_tile = tilepos;
+			}
 			break;
 		case 'n':
-			tilepos.z --;
-			updatetile();
-			last_tile = tilepos;
+			if (!beginTimer)
+			{
+				tilepos.z --;
+				updatetile();
+				last_tile = tilepos;
+			}
 			break;
 	}
 	glutPostRedisplay();
