@@ -1,44 +1,17 @@
-All requirements and steps are completed.
+Basic part:
+	All requirements and steps are completed
 
+Bonus part:
+	I completed expanding z-axis and rotating robot arm around y-axis.
+	Adding new tiles and making tiles rotate around the vertical line was not completed.(It's really too complicated)
 
-Introductions about some additional implements in some functions:
+Instructions of executing:
+	1. command "make" to compile.
+	2. command "./FruitTetris N" to execute where N is an integer representing N by 10 by 20 playing area. (If command is wrong there is a information)
 
-updatetile():
-	1. I implemented the judgment of if the tile can drop down in this function.
-	If a tile can't drop down, it will call settile() function.
-
-	2. I set a ending flag condition in the beginning of the function. If the flag is
-	true which means that the game is over. The function won't be executed. So once the 
-	game is over. All the keyboard inputs is unavailable and the screen won't change except
-	q, esc and r.
-
-GetTop():
-	The function is to get top y axis value of a tile, which aims to prevent the newtile out 
-	of the top screen.
-
-CheckSameColor(x1,y1,x2,y2):
-	Check if two block (x1,y1) and (x2,y2) have same color.
-
-RemoveCol():
-	Doing the removing of three tiles in a column. Because it's different with other three conditions
-	of removing.
-
-Remove():
-	Doing the removing of three tiles in other three conditions (in a row and two types of diagonal).
-
-CheckRemove():
-	Check if there exists conditions of removing including full rows or other four conditions of three
-	same color tiles. Because one removing may cause other removings. So this function will call itself 
-	inside recursively.
-
-
-Some clearification of the game:
-
-	1.The judgement of the game over is that a new randomly generated tile occupies some boards which are 
-	already occupied. And in this case, the new generated tile will still be drew on the screen so you may see
-	some overlapped boards. That's the symbol of losing the game.
-
-	2.After game over, the screen will stay unchanged until you press "r" to restart or "esc" or "q" to quit.
-
-	3.Because of the principle of removing three same color tiles. Sometimes some board seems to "hang in the air"
-	which is really weird but doesn't violate any requirement of this assignment.
+Instructions of playing (also imformed in game):
+	1. using "a s d w" to control robot arm to move as in basic part.
+	2. using "z x" to make robot arm rotate around y-axis.
+	3. using "n m" to make tile move towards the z-axis.
+	4. other commands are set as required.
+	5. There is a timer at the right top corner.

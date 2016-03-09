@@ -28,6 +28,15 @@ int N;
 int type;
 char text[40] = "Time: ";
 char over[40] = "Game Over";
+char instructor1[100] = "Use a,s,d,w to control";
+char instructor2[100] = "robot arm move";
+char instructor3[100] = "on x-y plane";
+char instructor4[100] = "Use z, x to control";
+char instructor5[100] = "robot arm to";
+char instructor6[100] = "rotate by y axis";
+char instructor7[100] = "using n, m to make";
+char instructor8[100] = "make tile move";
+char instructor9[100] = "towards the z-axis";
 
 int count = 0;
 bool beginTimer;
@@ -238,10 +247,8 @@ int updatetile()
 		int x = (int)(tilepos.x + tile[i].x);
 		int y = (int)(tilepos.y + tile[i].y);
 		int z = (int)(tilepos.z + tile[i].z);
-		cout << "enter"<<endl;
 		if ((x < 0 || x >9 ||y < 0 || y > 19 || z < 0 || z >= N || board[z * 200 + y * 10 + x] == true))
 		{
-			cout << "after"<<endl;
 			if (beginTimer)
 				isCo[i] = 1;
 			else
@@ -304,9 +311,13 @@ void newtile()
 	mode = rand() % mode_type;//get random shape
 	cur_index = mode * 4 + rand()%4; 
 	//vec3 max = GetTop(cur_index);
-	int x = (int)(((-120 - armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) - 33.0) / 33.0);
+	int x = (int)(((- armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) * cos(armbeta * DegreesToRadians) - 33.0 -120) / 33.0);
 	int y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0) + 1;
-	int z = 0;
+	int z;
+	if (armbeta >= 0)
+		z = type ? ((N - 1) / 2 - (int)((sin(armbeta * DegreesToRadians) * armlen) / 33.0)) : (N / 2 - 1 - (int)(sin(armbeta * DegreesToRadians) * armlen / 33.0));
+	else 
+		z = type ? ((N - 1) / 2 + (int)((sin(-armbeta * DegreesToRadians) * armlen) / 33.0)) : (N / 2 + (int)(sin(-armbeta * DegreesToRadians) * armlen / 33.0));
 	tilepos = vec3(x, y, z);
 	last_tile = tilepos;
 	flag = 0;
@@ -426,6 +437,11 @@ void initGrid()
 
 void initBoard()
 {
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
+	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
 	vector<vec4> boardpoints;
 	// Each cell is a square (2 triangles with 6 vertices)
 	for (int i = 0; i < 20; i++)
@@ -526,7 +542,7 @@ void initCurrentTile()
 	glEnableVertexAttribArray(vColor);
 }
 
-void SetText(char *t)
+void SetText(char *t,int x, int y)
 {
 	glDisable(GL_TEXTURE_2D); 
 	glMatrixMode(GL_PROJECTION);
@@ -536,7 +552,7 @@ void SetText(char *t)
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
-	glRasterPos2i(10, 600);
+	glRasterPos2i(x, y);
 	void * font = GLUT_BITMAP_9_BY_15;
 
 	int i = 0;
@@ -554,6 +570,8 @@ void SetText(char *t)
 void init()
 {
 	srand(time(0));
+	for (int i = 0; i < 4; i++)
+		last_pos[i] = vec3(-1,-1,-1);
 
 	globolposition = vector<vec4>(7200 * N);
 	globalcolours = vector<vec4>(200 * N);
@@ -631,12 +649,11 @@ void rotate()
 
 void settile()
 {
-	cout << "fdf"<<endl;
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
-	glBufferData(GL_ARRAY_BUFFER, 7200*sizeof(vec4), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
-	glBufferData(GL_ARRAY_BUFFER, 7200*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
 	for (int i = 0; i < 4; i++) // set boardcolor as shape's color
 	{
 		vector <vec4> tmp;
@@ -657,8 +674,9 @@ void settile()
 		{
 			for (int k = 0; k < N; k++)
 			{
-				if (globalcolours[k * 200 + j * 10 + i].w > 0)
+				if (board[k * 200 + j * 10 + i])
 				{
+					cout <<"true"<<endl;
 					vector<vec4> ncolour(36, globalcolours[k * 200 + j * 10 + i]);
 					glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
 					glBufferSubData(GL_ARRAY_BUFFER, (i + 10 * j) * 36 * sizeof(vec4), 36 * sizeof(vec4), &ncolour[0]);
@@ -667,7 +685,7 @@ void settile()
 				}
 			}
 		}	
-	
+	cout << "------------------"<<endl;
 	glBindBuffer(GL_ARRAY_BUFFER, 0);	
 	newtile();
 }
@@ -736,7 +754,7 @@ void display()
 	int lineNumber = (type) ? (64 * (N + 1) + 462) : (64 * N + 528);
 
 	glBindVertexArray(vaoIDs[1]); // Bind the VAO representing the grid cells (to be drawn first)
-	glDrawArrays(GL_TRIANGLES, 0, 200 * N * 36); // Draw the board (10*20*2 = 400 triangles)
+	glDrawArrays(GL_TRIANGLES, 0, 200 * N * 360); // Draw the board (10*20*2 = 400 triangles)
 
 	glBindVertexArray(vaoIDs[2]); // Bind the VAO representing the current tile (to be drawn on top of the board)
 	glDrawArrays(GL_TRIANGLES, 0, 24 * 6); // Draw the current tile (8 triangles)
@@ -754,6 +772,7 @@ void display()
 	glDrawArrays(GL_TRIANGLES, 0, 36); 
 
 	Modelv = Translate( -120, 33, 0);
+	//mat4 M3 = Modelv * RotateY(armbeta);
 	mat4 M1 = Modelv * RotateZ(armtheta);
 	M = M1 * Scale(armthick, armlen, armthick);
 	glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * M );
@@ -763,16 +782,26 @@ void display()
 	float x = -120 - armlen * sin(armtheta * DegreesToRadians);
 	float y = armlen * cos(armtheta * DegreesToRadians) + 33;
 	Modelv = Translate( x, y, 0);
-	M1 = Modelv * RotateZ(armphi);
+	mat4 M2 = Modelv * RotateY(armbeta);
+	M1 = M2 * RotateZ(armphi);
 	M = M1 * Scale(armlen, armthick, armthick);
 	glUniformMatrix4fv( model_view, 1, GL_TRUE, mv * M );
 	glBindVertexArray(vao2[2]);
 	glDrawArrays(GL_TRIANGLES, 0, 36); 
 
 	if (!end)
-		SetText(text);
+		SetText(text,525,600);
 	else
-		SetText(over);
+		SetText(over,525,600);
+	SetText(instructor1,525,550);
+	SetText(instructor2,525,525);
+	SetText(instructor3,525,500);
+	SetText(instructor4,525,450);
+	SetText(instructor5,525,425);
+	SetText(instructor6,525,400);
+	SetText(instructor7,525,350);
+	SetText(instructor8,525,325);
+	SetText(instructor9,525,300);
 	glutSwapBuffers();
 }
 
@@ -836,8 +865,14 @@ void updateArm()
 {
 	if (beginTimer)
 	{
-		tilepos.x = (int)(((-120 - armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) - 33.0) / 33.0);
+		tilepos.x = (int)(((- armlen * sin(armtheta * DegreesToRadians) + armlen * cos(armphi * DegreesToRadians)) * cos(armbeta * DegreesToRadians)- 33.0 - 120 ) / 33.0);
 		tilepos.y = (int)((armlen * cos(armtheta * DegreesToRadians) + armlen * sin(armphi * DegreesToRadians) - 33.0) / 33.0) + 1;
+		int z;
+		if (armbeta >= 0)
+			z = type ? ((N - 1) / 2 - (int)((sin(armbeta * DegreesToRadians) * armlen) / 33.0)) : (N / 2 - 1 - (int)(sin(armbeta * DegreesToRadians) * armlen / 33.0));
+		else 
+			z = type ? ((N - 1) / 2 + (int)((sin(-armbeta * DegreesToRadians) * armlen) / 33.0)) : (N / 2 + (int)(sin(-armbeta * DegreesToRadians) * armlen / 33.0));
+		tilepos.z = z;
 		updatetile();
 	}
 }
@@ -872,8 +907,26 @@ void keyboard(unsigned char key, int x, int y)
 			armtheta += 2;
 			updateArm();
 			break;
+		case 'z':
+			armbeta += 2;
+			updateArm();
+			break;
+		case 'x':
+			armbeta -= 2;
+			updateArm();
+			break;
 		case ' ':
 			beginTimer = false;
+			break;
+		case 'm':
+			tilepos.z ++;
+			updatetile();
+			last_tile = tilepos;
+			break;
+		case 'n':
+			tilepos.z --;
+			updatetile();
+			last_tile = tilepos;
 			break;
 	}
 	glutPostRedisplay();
