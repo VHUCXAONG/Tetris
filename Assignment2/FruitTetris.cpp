@@ -235,13 +235,16 @@ void CreateCube(vector<vec4> &bp, int i, int j, int k, int type)
 	bp.push_back(p7);
 }
 
+void Recover();
 int updatetile()
 {
 	for (int i = 0; i < 4; i++)
 		isCo[i] = 0;
 	if (end)
 		return 0;
-	// Bind the VBO containing current tile vertex positions
+	if (beginTimer)
+		Recover();
+	vector <vec4> tempcolor(36, grey);
 	for (int i = 0; i < 4; i++)
 	{
 		int x = (int)(tilepos.x + tile[i].x);
@@ -250,7 +253,11 @@ int updatetile()
 		if ((x < 0 || x >9 ||y < 0 || y > 19 || z < 0 || z >= N || board[z * 200 + y * 10 + x] == true))
 		{
 			if (beginTimer)
+			{
 				isCo[i] = 1;
+				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+				glBufferSubData(GL_ARRAY_BUFFER, (7200 * z + (x + 10 * y) * 36) * sizeof(vec4), 36 * sizeof(vec4), &tempcolor[0]);
+			}
 			else
 			{
 				if ((x < 0 || x >9 ||y < 0 || y > 19 || z < 0 || z >= N || board[z * 200 + y * 10 + x] == true))
@@ -273,7 +280,9 @@ int updatetile()
 			newcolours[i] = grey;
 		else
 			newcolours[i] = tmpcolours[i];
-	flag = 1;
+				
+	
+
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[4]); 
 	for (int i = 0; i < 4; i++) 
 	{
@@ -442,6 +451,7 @@ void initBoard()
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
 	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
+
 	vector<vec4> boardpoints;
 	// Each cell is a square (2 triangles with 6 vertices)
 	for (int i = 0; i < 10; i++)
@@ -461,7 +471,7 @@ void initBoard()
 
 	// Grid cell vertex positions
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
-	glBufferData(GL_ARRAY_BUFFER, size*sizeof(vec4), &boardpoints[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, size*sizeof(vec4), NULL, GL_STATIC_DRAW);
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
 
@@ -570,12 +580,15 @@ void SetText(char *t,int x, int y)
 
 void init()
 {
+	glEnable(GL_DEPTH_TEST);
 	srand(time(0));
 	for (int i = 0; i < 4; i++)
 		last_pos[i] = vec3(-1,-1,-1);
 
 	globalposition = vector<vec4>(7200 * N);
 	globalcolours = vector<vec4>(200 * N);
+	globalposition.clear();
+	globalcolours.clear();
 	// for (int i = 0; i < 7200; i++)
 	// 	globolposition[i] = ;
 	// Load shaders and use the shader program
@@ -588,8 +601,6 @@ void init()
 
 	// Create 3 Vertex Array Objects, each representing one 'object'. Store the names in array vaoIDs
 	glGenVertexArrays(4, &vaoIDs[0]);
-
-	// Initialize the grid, the board, and the current tile
 	initGrid();
 	initBoard();
 	initCurrentTile();
@@ -647,28 +658,13 @@ void rotate()
 	last_tile = tilepos;
 }
 
-void settile()
+void Recover()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
 	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
 	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
-	for (int i = 0; i < 4; i++) // set boardcolor as shape's color
-	{
-		vector <vec4> tmp;
-		int x = (int) (tilepos.x + tile[i].x);
-		int y = (int) (tilepos.y + tile[i].y);
-		int z = (int) (tilepos.z + tile[i].z);
-		board[z * 200 + y * 10 + x] = true;
-		globalcolours[z * 200 + y * 10 + x] = newcolours[i * 36];
-		CreateCube(tmp,x,y,z,type);
-		for (int j = 0; j < 36; j++)
-			globalposition[z * 7200 + (x + 10 * y) * 36 + j] = tmp[j];
-	}
-	//CheckRemove();
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
-
 	for (int i = 0; i < 10; i++)
 		for (int j = 0; j < 20; j++)
 		{
@@ -685,6 +681,24 @@ void settile()
 			}
 		}	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);	
+}
+
+void settile()
+{
+	for (int i = 0; i < 4; i++) // set boardcolor as shape's color
+	{
+		vector <vec4> tmp;
+		int x = (int) (tilepos.x + tile[i].x);
+		int y = (int) (tilepos.y + tile[i].y);
+		int z = (int) (tilepos.z + tile[i].z);
+		board[z * 200 + y * 10 + x] = true;
+		globalcolours[z * 200 + y * 10 + x] = newcolours[i * 36];
+		CreateCube(tmp,x,y,z,type);
+		for (int j = 0; j < 36; j++)
+			globalposition[z * 7200 + (x + 10 * y) * 36 + j] = tmp[j];
+	}
+
+	Recover();
 	newtile();
 }
 
@@ -697,12 +711,11 @@ bool movetile(vec2 direction)
 	return false;
 }
 //-------------------------------------------------------------------------------------------------------------------
-
 // Starts the game over - empties the board, creates new tiles, resets line counters
 void restart()
 {
 	end = false;
-	init();	
+	init();
 }
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -872,6 +885,7 @@ void updateArm()
 			z = type ? ((N - 1) / 2 + (int)((sin(-armbeta * DegreesToRadians) * armlen) / 33.0)) : (N / 2 + (int)(sin(-armbeta * DegreesToRadians) * armlen / 33.0));
 		tilepos.z = z;
 		updatetile();
+		last_tile = tilepos;
 	}
 }
 
