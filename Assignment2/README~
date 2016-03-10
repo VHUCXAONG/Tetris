@@ -7,7 +7,7 @@ Bonus part:
 
 Instructions of executing:
 	1. command "make" to compile.
-	2. command "./FruitTetris3D N" to execute where N is an integer representing N by 10 by 20 playing area. (If command is wrong there is a information)
+	2. command "./FruitTetris N" to execute where N is an integer representing N by 10 by 20 playing area. (If command is wrong there is a information)
 
 Instructions of playing (also imformed in game):
 	1. using "a s d w" to control robot arm to move as in basic part.
