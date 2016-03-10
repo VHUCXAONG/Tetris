@@ -446,8 +446,8 @@ void initGrid()
 
 void initBoard()
 {
-	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
-	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_STATIC_DRAW);
+	// glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+	// glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
 	glBufferData(GL_ARRAY_BUFFER, N*7200*sizeof(vec4), NULL, GL_DYNAMIC_DRAW);
