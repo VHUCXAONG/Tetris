@@ -255,7 +255,7 @@ int updatetile()
 			if (beginTimer)
 			{
 				isCo[i] = 1;
-				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[2]);
+				glBindBuffer(GL_ARRAY_BUFFER, vboIDs[3]);
 				glBufferSubData(GL_ARRAY_BUFFER, (7200 * z + (x + 10 * y) * 36) * sizeof(vec4), 36 * sizeof(vec4), &tempcolor[0]);
 			}
 			else
