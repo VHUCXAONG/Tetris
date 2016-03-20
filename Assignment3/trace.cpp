@@ -42,10 +42,22 @@ extern int step_max;
 /*********************************************************************
  * Phong illumination - you need to implement this!
  *********************************************************************/
-RGB_float phong(Point q, Vector v, Vector surf_norm, Spheres *sph) {
+RGB_float phong(Point q, Vector ve, Vector surf_norm, Spheres *sph) {
 //
 // do your thing here
 //
+  Spheres *cur;
+  Point *hit = new Point;
+  cur = intersect_scene(q, ve, sph, hit);
+  Vector v, n, r, l;
+  Vector o = {0, 0, 0};
+  v = get_vec(*hit, q);
+  n = get_vec(cur->center, *hit);
+  l = get_vec(*hit, light1);
+  //r =
+  normalize(&v);
+
+
 	RGB_float color;
 	return color;
 }
@@ -58,6 +70,7 @@ RGB_float recursive_ray_trace() {
 //
 // do your thing here
 //
+
 	RGB_float color;
 	return color;
 }

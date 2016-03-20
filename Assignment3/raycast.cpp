@@ -168,8 +168,9 @@ void display( void )
 	glEnable(GL_CULL_FACE);
 
 	glDrawArrays( GL_TRIANGLES, 0, NumPoints );
-
+	glutPostRedisplay();
 	glutSwapBuffers();
+
 }
 
 /*********************************************************
