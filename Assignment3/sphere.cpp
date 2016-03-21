@@ -26,7 +26,7 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
   hit->x = o.x + t * u.x;
   hit->y = o.y + t * u.y;
   hit->z = o.z + t * u.z;
-	return t;
+	return (t * vec_len(u));
 }
 
 /*********************************************************************
@@ -35,21 +35,23 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
  * which arguments to use for the function. For exmaple, note that you
  * should return the point of intersection to the calling function.
  **********************************************************************/
-Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit) {
+Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int *d) {
   Spheres *head = sph;
-  Spheres *re = NULL;
-  Point *temp = NULL;
+  Spheres *re = new Spheres;
+  Point *temp = new Point;
   float closest = FLT_MAX;
 
   while (head) {
     float t = intersect_sphere(o, u, head, temp);
     if (t > 0 || t < closest) {
       closest = t;
-      hit = temp;
+      *hit = *temp;
       re = head;
+      *d = t;
     } 
     head = head->next;
   }
+  delete temp;
   return re;
 }
 

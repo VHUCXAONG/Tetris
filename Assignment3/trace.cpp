@@ -42,23 +42,35 @@ extern int step_max;
 /*********************************************************************
  * Phong illumination - you need to implement this!
  *********************************************************************/
-RGB_float phong(Point q, Vector ve, Vector surf_norm, Spheres *sph) {
+RGB_float phong(Point q, Vector ve, Vector surf_norm, Spheres *sph, int *d) {
 //
 // do your thing here
 //
+  RGB_float color;
   Spheres *cur;
   Point *hit = new Point;
-  cur = intersect_scene(q, ve, sph, hit);
+  cur = intersect_scene(q, ve, sph, hit, d);
   Vector v, n, r, l;
-  Vector o = {0, 0, 0};
   v = get_vec(*hit, q);
   n = get_vec(cur->center, *hit);
   l = get_vec(*hit, light1);
-  //r =
+  r = 
   normalize(&v);
+  normalize(&n);
+  normalize(&l);
+  normalize(&r);
+  color.r = global_ambient[0] * cur->mat_ambient[0] + light1_intensity[0] / 
+    (decay_a + decay_b * (*d) + decay_c * (*d) * (*d)) * (cur->mat_diffuse[0] * vec_dot(n, l) + 
+    cur->mat_specular[0] * pow(vec_dot(r, v), cur->mat_shineness));
 
+  color.g = global_ambient[1] * cur->mat_ambient[1] + light1_intensity[1] / 
+    (decay_a + decay_b * (*d) + decay_c * (*d) * (*d)) * (cur->mat_diffuse[1] * vec_dot(n, l) + 
+    cur->mat_specular[1] * pow(vec_dot(r, v), cur->mat_shineness));
 
-	RGB_float color;
+  color.b = global_ambient[2] * cur->mat_ambient[2] + light1_intensity[2] / 
+    (decay_a + decay_b * (*d) + decay_c * (*d) * (*d)) * (cur->mat_diffuse[2] * vec_dot(n, l) + 
+    cur->mat_specular[2] * pow(vec_dot(r, v), cur->mat_shineness));
+
 	return color;
 }
 
@@ -70,7 +82,6 @@ RGB_float recursive_ray_trace() {
 //
 // do your thing here
 //
-
 	RGB_float color;
 	return color;
 }
