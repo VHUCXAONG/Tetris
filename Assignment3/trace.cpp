@@ -3,7 +3,8 @@
 #include <math.h>
 #include "global.h"
 #include "sphere.h"
-
+#include <iostream>
+using namespace std;
 //
 // Global variables
 //
@@ -52,6 +53,8 @@ RGB_float phong(Point q, Vector ve, Spheres *sph) {
   Point *hit = new Point;
   Point mid, asy;
   cur = intersect_scene(q, ve, sph, hit, d);
+  if (cur == NULL)
+    return background_clr;
   Vector v, n, r, l;
   v = get_vec(*hit, q);
   n = get_vec(cur->center, *hit);
@@ -117,6 +120,7 @@ void ray_trace() {
   cur_pixel_pos.x = x_start + 0.5 * x_grid_size;
   cur_pixel_pos.y = y_start + 0.5 * y_grid_size;
   cur_pixel_pos.z = image_plane;
+
 
   for (i=0; i<win_height; i++) {
     for (j=0; j<win_width; j++) {

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
+#include <iostream>
 /**********************************************************************
  * This function intersects a ray with a given sphere 'sph'. You should
  * use the parametric representation of a line and do the intersection.
@@ -17,12 +18,13 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
   float y1 = o.y - sph->center.y;
   float z1 = o.z - sph->center.z;
   float a = u.x * u.x + u.y * u.y + u.z * u.z;
-  float b = -2.0 * (u.x * x1 + u.y * y1 + u.z * z1);
+  float b = 2.0 * (u.x * x1 + u.y * y1 + u.z * z1);
   float c = x1 * x1 + y1 * y1 + z1 * z1 - (sph->radius) * (sph->radius);
   float delta = b * b - 4 * a * c;
   if (delta < 0)
     return -1.0;
   float t = (-b - sqrt(delta)) / (a * 2);
+  //std::cout <<t<<std::endl;
   hit->x = o.x + t * u.x;
   hit->y = o.y + t * u.y;
   hit->z = o.z + t * u.z;
@@ -37,13 +39,13 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
  **********************************************************************/
 Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, float *d) {
   Spheres *head = sph;
-  Spheres *re = new Spheres;
+  Spheres *re = NULL;
   Point *temp = new Point;
   float closest = FLT_MAX;
 
   while (head) {
     float t = intersect_sphere(o, u, head, temp);
-    if (t > 0 || t < closest) {
+    if (t > 0 && t < closest) {
       closest = t;
       *hit = *temp;
       re = head;
