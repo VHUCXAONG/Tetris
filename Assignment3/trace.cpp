@@ -43,16 +43,43 @@ extern int step_max;
 /*********************************************************************
  * Phong illumination - you need to implement this!
  *********************************************************************/
+bool CheckShadow(Point *hit) {
+  Vector n;
+  Spheres *head = scene;
+  float x1, y1, z1, a, b, c;
+  n = get_vec(light1, *hit);
+  while (head) {
+    if (head )
+    x1 = light1.x - head->center.x;
+    y1 = light1.y - head->center.y;
+    z1 = light1.z - head->center.z;
+    a = n.x * n.x + n.y * n.y + n.z * n.z;
+    b = 2.0 * (n.x * x1 + n.y * y1 + n.z * z1);
+    c = x1 * x1 + y1 * y1 + z1 * z1 - (head->radius) * (head->radius);
+    float delta = b * b - 4 * a * c;
+    if (delta) {
+      float t = (-b - sqrt(delta)) / (a * 2);
+      if (1 - t > 0.0001)
+        return true;
+    }
+    head = head->next;
+  }
+  return  false;
+}
+
+
+
 RGB_float phong(Point q, Vector ve, Spheres *sph) {
 //
 // do your thing here
 //
+  int s;
   RGB_float color;
   Spheres *cur;
-  float *d = new float;
+  float d;
   Point *hit = new Point;
   Point mid, asy;
-  cur = intersect_scene(q, ve, sph, hit, d);
+  cur = intersect_scene(q, ve, sph, hit);
   if (cur == NULL)
     return background_clr;
   Vector v, n, r, l;
@@ -67,22 +94,28 @@ RGB_float phong(Point q, Vector ve, Spheres *sph) {
   asy.y = 2 * mid.y - light1.y;
   asy.z = 2 * mid.z - light1.z;
   r = get_vec(*hit, asy);
+  d = vec_len(l);
   normalize(&v);
   normalize(&n);
   normalize(&l);
   normalize(&r);
-  color.r = global_ambient[0] * cur->mat_ambient[0] + light1_intensity[0] / 
-    (decay_a + decay_b * (*d) + decay_c * (*d) * (*d)) * (cur->mat_diffuse[0] * vec_dot(n, l) + 
-    cur->mat_specular[0] * pow(vec_dot(r, v), cur->mat_shineness));
+  if (shadow_on == 1 && CheckShadow(hit))
+    s = 0;
+  else
+    s = 1;
+  color.r = global_ambient[0] * cur->mat_ambient[0] + s * light1_intensity[0] / 
+     (decay_a + decay_b * (d) + decay_c * (d) * (d)) * (cur->mat_diffuse[0] * vec_dot(n, l) + 
+     cur->mat_specular[0] * pow(vec_dot(r, v), cur->mat_shineness));
 
-  color.g = global_ambient[1] * cur->mat_ambient[1] + light1_intensity[1] / 
-    (decay_a + decay_b * (*d) + decay_c * (*d) * (*d)) * (cur->mat_diffuse[1] * vec_dot(n, l) + 
-    cur->mat_specular[1] * pow(vec_dot(r, v), cur->mat_shineness));
+  color.g = global_ambient[1] * cur->mat_ambient[1] + s * light1_intensity[1] / 
+    (decay_a + decay_b * (d) + decay_c * (d) * (d)) * (cur->mat_diffuse[1] * vec_dot(n, l) + 
+     cur->mat_specular[1] * pow(vec_dot(r, v), cur->mat_shineness));
 
-  color.b = global_ambient[2] * cur->mat_ambient[2] + light1_intensity[2] / 
-    (decay_a + decay_b * (*d) + decay_c * (*d) * (*d)) * (cur->mat_diffuse[2] * vec_dot(n, l) + 
-    cur->mat_specular[2] * pow(vec_dot(r, v), cur->mat_shineness));
-  delete d;
+  color.b = global_ambient[2] * cur->mat_ambient[2] + s * light1_intensity[2] / 
+     (decay_a + decay_b * (d) + decay_c * (d) * (d)) * (cur->mat_diffuse[2] * vec_dot(n, l) + 
+     cur->mat_specular[2] * pow(vec_dot(r, v), cur->mat_shineness)); 
+
+  delete hit;
   return color;
 }
 
