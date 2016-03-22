@@ -69,7 +69,7 @@ bool CheckShadow(Point *hit) {
 
 
 
-RGB_float phong(Point q, Vector ve, Spheres *sph) {
+RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *re, Spheres *c, Point *h) {
 //
 // do your thing here
 //
@@ -80,6 +80,8 @@ RGB_float phong(Point q, Vector ve, Spheres *sph) {
   Point *hit = new Point;
   Point mid, asy;
   cur = intersect_scene(q, ve, sph, hit);
+  c = cur;
+  h = hit;
   if (cur == NULL)
     return background_clr;
   Vector v, n, r, l;
@@ -94,6 +96,7 @@ RGB_float phong(Point q, Vector ve, Spheres *sph) {
   asy.y = 2 * mid.y - light1.y;
   asy.z = 2 * mid.z - light1.z;
   r = get_vec(*hit, asy);
+  *re = r;
   d = vec_len(l);
   normalize(&v);
   normalize(&n);
@@ -108,13 +111,12 @@ RGB_float phong(Point q, Vector ve, Spheres *sph) {
      cur->mat_specular[0] * pow(vec_dot(r, v), cur->mat_shineness));
 
   color.g = global_ambient[1] * cur->mat_ambient[1] + s * light1_intensity[1] / 
-    (decay_a + decay_b * (d) + decay_c * (d) * (d)) * (cur->mat_diffuse[1] * vec_dot(n, l) + 
+     (decay_a + decay_b * (d) + decay_c * (d) * (d)) * (cur->mat_diffuse[1] * vec_dot(n, l) + 
      cur->mat_specular[1] * pow(vec_dot(r, v), cur->mat_shineness));
 
   color.b = global_ambient[2] * cur->mat_ambient[2] + s * light1_intensity[2] / 
      (decay_a + decay_b * (d) + decay_c * (d) * (d)) * (cur->mat_diffuse[2] * vec_dot(n, l) + 
      cur->mat_specular[2] * pow(vec_dot(r, v), cur->mat_shineness)); 
-
   delete hit;
   return color;
 }
@@ -123,11 +125,21 @@ RGB_float phong(Point q, Vector ve, Spheres *sph) {
  * This is the recursive ray tracer - you need to implement this!
  * You should decide what arguments to use.
  ************************************************************************/
-RGB_float recursive_ray_trace() {
+RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step) {
 //
 // do your thing here
 //
+  Vector *re = new Vector;
+  Spheres *cur = new Spheres;
+  Point *hit = new Point;
 	RGB_float color;
+  color = phong(q, ve, sph, re, cur, hit);
+  if (step > 0) {
+    if (cur != NULL)
+      color = clr_add(color, clr_scale(recursive_ray_trace(*hit, *re, sph, step - 1), cur->reflectance));
+    else
+      return color;
+  }
 	return color;
 }
 
@@ -164,7 +176,8 @@ void ray_trace() {
       //
       // ret_color = recursive_ray_trace();
       //ret_color = background_clr; // just background for now
-      ret_color = phong(eye_pos, ray, scene);
+      //ret_color = phong(eye_pos, ray, scene);
+      ret_color = recursive_ray_trace(eye_pos, ray, scene, step_max);
       // Parallel rays can be cast instead using below
       //
       // ray.x = ray.y = 0;
