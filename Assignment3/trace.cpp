@@ -67,9 +67,20 @@ bool CheckShadow(Point *hit) {
   return  false;
 }
 
+Vector Reflect(Point in, Point hit, Vector n)
+{
+  Point mid, asy;
+  float t = ((in.x - hit.x) * n.x + (in.y - hit.y) * n.y + (in.z - hit.z) * n.z) / (n.x * n.x + n.y * n.y + n.z * n.z);
+  mid.x = hit.x + t * n.x;
+  mid.y = hit.y + t * n.y;
+  mid.z = hit.z + t * n.z;
+  asy.x = 2 * mid.x - in.x;
+  asy.y = 2 * mid.y - in.y;
+  asy.z = 2 * mid.z - in.z;
+  return get_vec(hit, asy);
+}
 
-
-RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *re, Spheres *c, Point *h) {
+RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point *h) {
 //
 // do your thing here
 //
@@ -78,26 +89,22 @@ RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *re, Spheres *c, Point 
   Spheres *cur;
   float d;
   Point *hit = new Point;
-  Point mid, asy;
+  //Point mid, asy;
   cur = intersect_scene(q, ve, sph, hit);
-  c = cur;
-  h = hit;
+  *h = *hit;
   if (cur == NULL)
+  {
+    *index = -1;
     return background_clr;
+  }
+  *index = cur->index - 1;
   Vector v, n, r, l;
   v = get_vec(*hit, q);
   n = get_vec(cur->center, *hit);
   l = get_vec(*hit, light1);
-  float t = ((light1.x - hit->x) * n.x + (light1.y - hit->y) * n.y + (light1.z - hit->z) * n.z) / (n.x * n.x + n.y * n.y + n.z * n.z);
-  mid.x = hit->x + t * n.x;
-  mid.y = hit->y + t * n.y;
-  mid.z = hit->z + t * n.z;
-  asy.x = 2 * mid.x - light1.x;
-  asy.y = 2 * mid.y - light1.y;
-  asy.z = 2 * mid.z - light1.z;
-  r = get_vec(*hit, asy);
-  *re = r;
+  r = Reflect(light1, *hit, n);
   d = vec_len(l);
+  *nor = n;
   normalize(&v);
   normalize(&n);
   normalize(&l);
@@ -129,17 +136,38 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step) {
 //
 // do your thing here
 //
-  Vector *re = new Vector;
-  Spheres *cur = new Spheres;
+  Vector *nor = new Vector;
+  Vector re;
+  Spheres *cur = sph;
+  int *index = new int;
   Point *hit = new Point;
+  Point mid, asy;
 	RGB_float color;
-  color = phong(q, ve, sph, re, cur, hit);
-  if (step > 0) {
-    if (cur != NULL)
-      color = clr_add(color, clr_scale(recursive_ray_trace(*hit, *re, sph, step - 1), cur->reflectance));
+  color = phong(q, ve, sph, nor, index, hit);
+  if (step > 0) 
+  {
+    if (*index != -1)
+    {
+      re = Reflect(q, *hit, *nor);
+      normalize(&re);
+      while (*index) 
+      {
+        cur = cur->next;
+        *index--;
+      }
+      color = clr_add(color, clr_scale(recursive_ray_trace(*hit, re, sph, step - 1), cur->reflectance));
+    }
     else
+    {
+      delete nor;
+      delete hit;
+      //delete index;
       return color;
+    }
   }
+  delete nor;
+  delete hit;
+  //delete index;
 	return color;
 }
 

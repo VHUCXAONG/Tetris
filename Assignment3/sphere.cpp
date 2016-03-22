@@ -1,8 +1,8 @@
 #include "sphere.h"
 #include <stdlib.h>
 #include <math.h>
-#include <float.h>
 #include <iostream>
+using namespace std;
 /**********************************************************************
  * This function intersects a ray with a given sphere 'sph'. You should
  * use the parametric representation of a line and do the intersection.
@@ -28,7 +28,7 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
   hit->x = o.x + t * u.x;
   hit->y = o.y + t * u.y;
   hit->z = o.z + t * u.z;
-	return (t * vec_len(u));
+	return t;
 }
 
 /*********************************************************************
@@ -41,7 +41,7 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit) {
   Spheres *head = sph;
   Spheres *re = NULL;
   Point *temp = new Point;
-  float closest = FLT_MAX;
+  float closest = 500;
 
   while (head) {
     float t = intersect_sphere(o, u, head, temp);
