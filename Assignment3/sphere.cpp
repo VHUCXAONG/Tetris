@@ -35,7 +35,7 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
  * which arguments to use for the function. For exmaple, note that you
  * should return the point of intersection to the calling function.
  **********************************************************************/
-Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int *d) {
+Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, float *d) {
   Spheres *head = sph;
   Spheres *re = new Spheres;
   Point *temp = new Point;

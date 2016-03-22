@@ -42,19 +42,28 @@ extern int step_max;
 /*********************************************************************
  * Phong illumination - you need to implement this!
  *********************************************************************/
-RGB_float phong(Point q, Vector ve, Vector surf_norm, Spheres *sph, int *d) {
+RGB_float phong(Point q, Vector ve, Spheres *sph) {
 //
 // do your thing here
 //
   RGB_float color;
   Spheres *cur;
+  float *d = new float;
   Point *hit = new Point;
+  Point mid, asy;
   cur = intersect_scene(q, ve, sph, hit, d);
   Vector v, n, r, l;
   v = get_vec(*hit, q);
   n = get_vec(cur->center, *hit);
   l = get_vec(*hit, light1);
-  r = 
+  float t = ((light1.x - hit->x) * n.x + (light1.y - hit->y) * n.y + (light1.z - hit->z) * n.z) / (n.x * n.x + n.y * n.y + n.z * n.z);
+  mid.x = hit->x + t * n.x;
+  mid.y = hit->y + t * n.y;
+  mid.z = hit->z + t * n.z;
+  asy.x = 2 * mid.x - light1.x;
+  asy.y = 2 * mid.y - light1.y;
+  asy.z = 2 * mid.z - light1.z;
+  r = get_vec(*hit, asy);
   normalize(&v);
   normalize(&n);
   normalize(&l);
@@ -70,8 +79,8 @@ RGB_float phong(Point q, Vector ve, Vector surf_norm, Spheres *sph, int *d) {
   color.b = global_ambient[2] * cur->mat_ambient[2] + light1_intensity[2] / 
     (decay_a + decay_b * (*d) + decay_c * (*d) * (*d)) * (cur->mat_diffuse[2] * vec_dot(n, l) + 
     cur->mat_specular[2] * pow(vec_dot(r, v), cur->mat_shineness));
-
-	return color;
+  delete d;
+  return color;
 }
 
 /************************************************************************
@@ -117,8 +126,8 @@ void ray_trace() {
       // You need to change this!!!
       //
       // ret_color = recursive_ray_trace();
-      ret_color = background_clr; // just background for now
-
+      //ret_color = background_clr; // just background for now
+      ret_color = phong(eye_pos, ray, scene);
       // Parallel rays can be cast instead using below
       //
       // ray.x = ray.y = 0;
@@ -127,7 +136,7 @@ void ray_trace() {
 
 // Checkboard for testing
 RGB_float clr = {float(i/32), 0, float(j/32)};
-ret_color = clr;
+//ret_color = clr;
 
       frame[i][j][0] = GLfloat(ret_color.r);
       frame[i][j][1] = GLfloat(ret_color.g);
