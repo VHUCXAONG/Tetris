@@ -37,7 +37,7 @@ extern float decay_c;
 
 extern int shadow_on;
 extern int step_max;
-
+extern int l;
 /////////////////////////////////////////////////////////////////////
 
 /*********************************************************************
@@ -143,7 +143,7 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step) {
   Point mid, asy;
 	RGB_float color;
   color = phong(q, ve, sph, nor, index, hit);
-  if (step > 0) 
+  if (step > 0 && l) 
   {
     if (*index != -1)
     {
