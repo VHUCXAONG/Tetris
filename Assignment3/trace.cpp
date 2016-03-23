@@ -49,7 +49,6 @@ bool CheckShadow(Point *hit) {
   float x1, y1, z1, a, b, c;
   n = get_vec(light1, *hit);
   while (head) {
-    if (head )
     x1 = light1.x - head->center.x;
     y1 = light1.y - head->center.y;
     z1 = light1.z - head->center.z;
