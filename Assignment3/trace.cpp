@@ -38,11 +38,14 @@ extern float decay_c;
 extern int shadow_on;
 extern int step_max;
 extern int l;
+extern int board;
 /////////////////////////////////////////////////////////////////////
 
 /*********************************************************************
  * Phong illumination - you need to implement this!
  *********************************************************************/
+ RGB_float white = {0,0,0};
+ RGB_float black = {1,1,1};
 bool CheckShadow(Point *hit) {
   Vector n;
   Spheres *head = scene;
@@ -79,6 +82,13 @@ Vector Reflect(Point in, Point hit, Vector n)
   return get_vec(hit, asy);
 }
 
+int trans(float x)
+{
+  if (x < 0)
+     return (-(int)(abs(x)));
+  return (int)x + 1;
+}
+
 RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point *h) {
 //
 // do your thing here
@@ -94,6 +104,19 @@ RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point
   if (cur == NULL)
   {
     *index = -1;
+    if (board)
+    {
+      float *x = new float;
+      float *y = new float;
+      if (intersect_board(q, ve, x, y))
+      {
+        int x1 = trans(*x);
+        int y1 = trans(*y);
+        delete x;
+        delete y;
+        return ((x1 + y1) % 2)?black:white;
+      }
+    }
     return background_clr;
   }
   *index = cur->index - 1;
@@ -134,7 +157,7 @@ RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point
 RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step) {
 //
 // do your thing here
-//
+//  
   Vector *nor = new Vector;
   Vector re;
   Spheres *cur = sph;
@@ -154,7 +177,7 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step) {
         cur = cur->next;
         *index--;
       }
-      color = clr_add(color, clr_scale(recursive_ray_trace(*hit, re, sph, step - 1), cur->reflectance));
+        color = clr_add(color, clr_scale(recursive_ray_trace(*hit, re, sph, step - 1), cur->reflectance));
     }
     else
     {

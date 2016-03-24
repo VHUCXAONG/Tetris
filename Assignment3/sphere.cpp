@@ -3,6 +3,15 @@
 #include <math.h>
 #include <iostream>
 using namespace std;
+
+#define PI 3.14159265
+
+
+extern float grid;
+extern Point boardcenter;
+extern float theta;
+float s = sin(theta * PI / 180);
+float c = cos(theta * PI / 180);
 /**********************************************************************
  * This function intersects a ray with a given sphere 'sph'. You should
  * use the parametric representation of a line and do the intersection.
@@ -31,6 +40,13 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
 	return t;
 }
 
+bool intersect_board(Point o, Vector u, float *x, float *y)
+{
+  float t = (s * boardcenter.z + c * boardcenter.y - s * o.z - c * o.y) / (s * u.z + c * u.y);
+  *x = (o.x + t * u.x - boardcenter.x) / grid;
+  *y = (o.y + t * u.y - boardcenter.y) / (s * grid);
+  return ((abs(*x) < 4.0) && (abs(*y) < 4.0));
+}
 /*********************************************************************
  * This function returns a pointer to the sphere object that the
  * ray intersects first; NULL if no intersection. You should decide

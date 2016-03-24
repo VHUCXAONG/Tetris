@@ -79,6 +79,12 @@ int step_max = 1;
 int shadow_on = 0;
 
 int l = 0;
+
+int board = 0;
+
+Point boardcenter = {0, 0, -5};
+float grid = 2;
+float theta = 90;
 // OpenGL
 const int NumPoints = 6;
 
@@ -223,6 +229,7 @@ int main( int argc, char **argv )
 	{
 		if (strcmp(argv[i], "+s") == 0)	shadow_on = 1;
 		if (strcmp(argv[i], "+l") == 0) l = 1;
+		if (strcmp(argv[i], "+c") == 0) board = 1;
 	}
 
 	//
