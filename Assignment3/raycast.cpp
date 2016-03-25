@@ -82,9 +82,13 @@ int l = 0;
 
 int board = 0;
 
-Point boardcenter = {0, 0, -5};
-float grid = 2;
-float theta = 90;
+Point boardcenter = {0, -2, -5};
+float grid = 0.8;
+float theta = 10;
+
+float board_ambient = 0.3;
+
+float board_k = 0.3;
 // OpenGL
 const int NumPoints = 6;
 

@@ -40,9 +40,14 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
 	return t;
 }
 
-bool intersect_board(Point o, Vector u, float *x, float *y)
+bool intersect_board(Point o, Vector u, float *x, float *y, Point *hit)
 {
   float t = (s * boardcenter.z + c * boardcenter.y - s * o.z - c * o.y) / (s * u.z + c * u.y);
+  if (t < 0)
+    return false;
+  hit->x = o.x + t * u.x;
+  hit->y = o.y + t * u.y;
+  hit->z = o.z + t * u.z;
   *x = (o.x + t * u.x - boardcenter.x) / grid;
   *y = (o.y + t * u.y - boardcenter.y) / (s * grid);
   return ((abs(*x) < 4.0) && (abs(*y) < 4.0));
@@ -61,7 +66,7 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit) {
 
   while (head) {
     float t = intersect_sphere(o, u, head, temp);
-    if (t > 0 && t < closest) {
+    if (t > 0.00001 && t < closest) {
       closest = t;
       *hit = *temp;
       re = head;

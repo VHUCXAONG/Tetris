@@ -26,4 +26,4 @@ Spheres *intersect_scene(Point, Vector, Spheres *, Point *);
 Vector sphere_normal(Point, Spheres *);
 // add a sphere to the sphere list
 Spheres *add_sphere(Spheres *, Point, float, float [], float [], float [], float, float, int);
-bool intersect_board(Point o, Vector u, float *x, float *y);
+bool intersect_board(Point o, Vector u, float *x, float *y, Point *hit);

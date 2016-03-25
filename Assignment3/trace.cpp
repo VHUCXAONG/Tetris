@@ -39,6 +39,9 @@ extern int shadow_on;
 extern int step_max;
 extern int l;
 extern int board;
+
+extern float board_ambient;
+extern float board_k;
 /////////////////////////////////////////////////////////////////////
 
 /*********************************************************************
@@ -106,15 +109,25 @@ RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point
     *index = -1;
     if (board)
     {
+      Point *h = new Point;
       float *x = new float;
       float *y = new float;
-      if (intersect_board(q, ve, x, y))
+      if (intersect_board(q, ve, x, y, h))
       {
         int x1 = trans(*x);
         int y1 = trans(*y);
+        int b_s = 1;
         delete x;
         delete y;
-        return ((x1 + y1) % 2)?black:white;
+        RGB_float c = ((x1 + y1) % 2)?black:white;
+        if (shadow_on == 1 && CheckShadow(h))
+        {
+          c.r = c.r * board_k + board_ambient * global_ambient[0];
+          c.g = c.g * board_k + board_ambient * global_ambient[1];
+          c.b = c.b * board_k + board_ambient * global_ambient[2];
+        }
+        delete h;
+        return c;
       }
     }
     return background_clr;
