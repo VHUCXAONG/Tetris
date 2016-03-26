@@ -88,31 +88,27 @@ Vector Reflect(Point in, Point hit, Vector n)
   return get_vec(hit, asy);
 }
 
+bool Refract(Point in, Point hit, Vector n, float eta1, float eta2, Vector *t, int *c)
+{
+  Vector v;
+  v = get_vec(hit, in);
+  normalize(&v);
+  normalize(&n);
+  float e = eta1 / eta2;
+  float a = 1 - e * e * (1 - vec_dot(n, v) * vec_dot(n, v));
+  float x = 1 - vec_dot(n, v) * vec_dot(n, v);
+  if (a < 0)
+    return false;
+  float k = e * vec_dot(n, v) - sqrt(a);
+  *t = vec_minus(vec_scale(n, k), vec_scale(v, e));
+  return true;
+}
+
 int trans(float x)
 {
   if (x < 0)
      return (-(int)(abs(x)));
   return (int)x + 1;
-}
-
-Point intersect_refraction(Point o, Vector u, Spheres *sph)
-{
-  Point hit;
-  float x1 = o.x - sph->center.x;
-  float y1 = o.y - sph->center.y;
-  float z1 = o.z - sph->center.z;
-  float a = u.x * u.x + u.y * u.y + u.z * u.z;
-  float b = 2.0 * (u.x * x1 + u.y * y1 + u.z * z1);
-  float c = x1 * x1 + y1 * y1 + z1 * z1 - (sph->radius) * (sph->radius);
-  float delta = b * b - 4 * a * c;
-  float t = (-b + sqrt(delta)) / (a * 2);
-  cout <<sph->index <<endl;
-  cout <<t<<endl;
-  //std::cout <<t<<std::endl;
-  hit.x = o.x + t * u.x;
-  hit.y = o.y + t * u.y;
-  hit.z = o.z + t * u.z;
-  return hit;
 }
 
 RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point *h, int type) {
@@ -240,10 +236,7 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int ty
           int a;
           if (Refract(q, *hit, *nor, eta1, eta2, &refr, &a))
           {
-            normalize(&refr);
             color_refr = clr_scale(recursive_ray_trace(*hit, refr, sph, step - 1, 2), cur->refraction);
-            //if (color_refr.r > 0.9)
-            //cout << color_refr.r <<" " << color_refr.g <<" " <<color_refr.b <<" "<<endl;
             color = clr_add(color, color_refr);
           }
         }
@@ -272,7 +265,6 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int ty
         int a;
         if (Refract(q, *hit, *nor, eta1, eta2, &refr, &a) == true)
         {
-          //cout << Refract(q, *hit, *nor, eta1, eta2, &refr, &a) <<endl;
           color_refr = clr_scale(recursive_ray_trace(*hit, refr, sph, step - 1, 1), cur->refraction);
           color = clr_add(color, color_refr);
         }
