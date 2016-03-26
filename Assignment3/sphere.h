@@ -17,13 +17,15 @@ typedef struct sphere {
   float reflectance;       // this number [0,1] determines how much 
                            // reflected light contributes to the color
                            // of a pixel
+  float refraction;
+  float eta;
   struct sphere *next;
 } Spheres;   // a list of spheres
 
 // intersect ray with sphere
-Spheres *intersect_scene(Point, Vector, Spheres *, Point *);
+Spheres *intersect_scene(Point, Vector, Spheres *, Point *, int);
 // return the unit normal at a point on sphere
 Vector sphere_normal(Point, Spheres *);
 // add a sphere to the sphere list
-Spheres *add_sphere(Spheres *, Point, float, float [], float [], float [], float, float, int);
+Spheres *add_sphere(Spheres *, Point, float, float [], float [], float [], float, float, float, float, int);
 bool intersect_board(Point o, Vector u, float *x, float *y, Point *hit);

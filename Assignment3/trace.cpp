@@ -38,10 +38,13 @@ extern float decay_c;
 extern int shadow_on;
 extern int step_max;
 extern int l;
+extern int r;
 extern int board;
 
 extern float board_ambient;
 extern float board_k;
+
+extern float sky_eta;
 /////////////////////////////////////////////////////////////////////
 
 /*********************************************************************
@@ -92,58 +95,88 @@ int trans(float x)
   return (int)x + 1;
 }
 
-RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point *h) {
+Point intersect_refraction(Point o, Vector u, Spheres *sph)
+{
+  Point hit;
+  float x1 = o.x - sph->center.x;
+  float y1 = o.y - sph->center.y;
+  float z1 = o.z - sph->center.z;
+  float a = u.x * u.x + u.y * u.y + u.z * u.z;
+  float b = 2.0 * (u.x * x1 + u.y * y1 + u.z * z1);
+  float c = x1 * x1 + y1 * y1 + z1 * z1 - (sph->radius) * (sph->radius);
+  float delta = b * b - 4 * a * c;
+  float t = (-b + sqrt(delta)) / (a * 2);
+  cout <<sph->index <<endl;
+  cout <<t<<endl;
+  //std::cout <<t<<std::endl;
+  hit.x = o.x + t * u.x;
+  hit.y = o.y + t * u.y;
+  hit.z = o.z + t * u.z;
+  return hit;
+}
+
+RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point *h, int type) {
 //
 // do your thing here
 //
+  Vector v, n, r, l;
   int s;
   RGB_float color;
   Spheres *cur;
   float d;
   Point *hit = new Point;
-  //Point mid, asy;
-  cur = intersect_scene(q, ve, sph, hit);
-  *h = *hit;
-  if (cur == NULL)
+  if (type == 2)
   {
-    *index = -1;
-    if (board)
+    cur = intersect_scene(q, ve, sph, hit, 2);
+    *h = *hit;
+    n = get_vec(*hit, cur->center);
+  }
+  else if (type == 1)
+  {
+    cur = intersect_scene(q, ve, sph, hit, 1);
+    *h = *hit;
+    if (cur == NULL)
     {
-      Point *h = new Point;
-      float *x = new float;
-      float *y = new float;
-      if (intersect_board(q, ve, x, y, h))
+      *index = -1;
+      if (board)
       {
-        int x1 = trans(*x);
-        int y1 = trans(*y);
-        int b_s = 1;
-        delete x;
-        delete y;
-        RGB_float c = ((x1 + y1) % 2)?black:white;
-        if (shadow_on == 1 && CheckShadow(h))
+        Point *h = new Point;
+        float *x = new float;
+        float *y = new float;
+        if (intersect_board(q, ve, x, y, h))
         {
-          c.r = c.r * board_k + board_ambient * global_ambient[0];
-          c.g = c.g * board_k + board_ambient * global_ambient[1];
-          c.b = c.b * board_k + board_ambient * global_ambient[2];
+          int x1 = trans(*x);
+          int y1 = trans(*y);
+          int b_s = 1;
+          delete x;
+          delete y;
+          RGB_float c = ((x1 + y1) % 2)?black:white;
+          if (shadow_on == 1 && CheckShadow(h))
+          {
+            c.r = c.r * board_k + board_ambient * global_ambient[0];
+            c.g = c.g * board_k + board_ambient * global_ambient[1];
+            c.b = c.b * board_k + board_ambient * global_ambient[2];
+          }
+          delete hit;
+          delete h;
+          return c;
         }
-        delete h;
-        return c;
       }
+      delete hit;
+      return background_clr;
     }
-    return background_clr;
+    n = get_vec(cur->center, *hit);
   }
   *index = cur->index - 1;
-  Vector v, n, r, l;
   v = get_vec(*hit, q);
-  n = get_vec(cur->center, *hit);
   l = get_vec(*hit, light1);
   r = Reflect(light1, *hit, n);
   d = vec_len(l);
-  *nor = n;
   normalize(&v);
   normalize(&n);
   normalize(&l);
   normalize(&r);
+  *nor = n;
   if (shadow_on == 1 && CheckShadow(hit))
     s = 0;
   else
@@ -167,43 +200,89 @@ RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point
  * This is the recursive ray tracer - you need to implement this!
  * You should decide what arguments to use.
  ************************************************************************/
-RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step) {
+RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int type) {
 //
 // do your thing here
-//  
+//
   Vector *nor = new Vector;
-  Vector re;
+  Vector refl, refr;
   Spheres *cur = sph;
   int *index = new int;
   Point *hit = new Point;
   Point mid, asy;
-	RGB_float color;
-  color = phong(q, ve, sph, nor, index, hit);
-  if (step > 0 && l) 
+	RGB_float color, color_refl, color_refr;
+  color = phong(q, ve, sph, nor, index, hit, type);
+  //color_refl = white;
+  //color_refr = white;
+
+  if (step > 0)
   {
-    if (*index != -1)
+    if (type == 1)
     {
-      re = Reflect(q, *hit, *nor);
-      normalize(&re);
-      while (*index) 
+      if (*index != -1)
       {
-        cur = cur->next;
-        *index--;
+        refl = Reflect(q, *hit, *nor);
+        normalize(&refl);
+        while (*index) 
+        {
+          cur = cur->next;
+          *index--;
+        }
+        if (l)
+        {
+          color_refl = clr_scale(recursive_ray_trace(*hit, refl, sph, step - 1, 1), cur->reflectance);
+          color = clr_add(color, color_refl);
+        }    
+        if (r)
+        {
+          float eta1 = sky_eta;
+          float eta2 = cur->eta;
+          int a;
+          if (Refract(q, *hit, *nor, eta1, eta2, &refr, &a))
+          {
+            normalize(&refr);
+            color_refr = clr_scale(recursive_ray_trace(*hit, refr, sph, step - 1, 2), cur->refraction);
+            //if (color_refr.r > 0.9)
+            //cout << color_refr.r <<" " << color_refr.g <<" " <<color_refr.b <<" "<<endl;
+            color = clr_add(color, color_refr);
+          }
+        }
       }
-        color = clr_add(color, clr_scale(recursive_ray_trace(*hit, re, sph, step - 1), cur->reflectance));
+      else
+      {
+        delete nor;
+        delete hit;
+        // cout << color.r <<" " << color.g <<" " <<color.b <<" "<<endl;
+        return color;
+      }
     }
-    else
+    else if (type == 2)
     {
-      delete nor;
-      delete hit;
-      //delete index;
-      return color;
+      refl = Reflect(q, *hit, *nor);
+      normalize(&refl);
+      if (l)
+      {
+        color_refl = clr_scale(recursive_ray_trace(*hit, refl, sph, step - 1, 2), cur->reflectance);
+        color = clr_add(color, color_refl);
+      }
+      if (r)
+      {
+        float eta1 = cur->eta;
+        float eta2 = sky_eta;
+        int a;
+        if (Refract(q, *hit, *nor, eta1, eta2, &refr, &a) == true)
+        {
+          //cout << Refract(q, *hit, *nor, eta1, eta2, &refr, &a) <<endl;
+          color_refr = clr_scale(recursive_ray_trace(*hit, refr, sph, step - 1, 1), cur->refraction);
+          color = clr_add(color, color_refr);
+        }
+      }
     }
   }
   delete nor;
   delete hit;
   //delete index;
-	return color;
+  return color;
 }
 
 /*********************************************************************
@@ -240,7 +319,7 @@ void ray_trace() {
       // ret_color = recursive_ray_trace();
       //ret_color = background_clr; // just background for now
       //ret_color = phong(eye_pos, ray, scene);
-      ret_color = recursive_ray_trace(eye_pos, ray, scene, step_max);
+      ret_color = recursive_ray_trace(eye_pos, ray, scene, step_max, 1);
       // Parallel rays can be cast instead using below
       //
       // ray.x = ray.y = 0;

@@ -22,7 +22,7 @@ float c = cos(theta * PI / 180);
  * If there is an intersection, the point of intersection should be
  * stored in the "hit" variable
  **********************************************************************/
-float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
+float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit, int type) {
   float x1 = o.x - sph->center.x;
   float y1 = o.y - sph->center.y;
   float z1 = o.z - sph->center.z;
@@ -32,7 +32,13 @@ float intersect_sphere(Point o, Vector u, Spheres *sph, Point *hit) {
   float delta = b * b - 4 * a * c;
   if (delta < 0)
     return -1.0;
-  float t = (-b - sqrt(delta)) / (a * 2);
+  float t1 = (-b - sqrt(delta)) / (a * 2);
+  float t2 = (-b + sqrt(delta)) / (a * 2);
+  float t;
+  if (type == 1)
+    t = t1;
+  else
+    t = t2;
   //std::cout <<t<<std::endl;
   hit->x = o.x + t * u.x;
   hit->y = o.y + t * u.y;
@@ -58,14 +64,14 @@ bool intersect_board(Point o, Vector u, float *x, float *y, Point *hit)
  * which arguments to use for the function. For exmaple, note that you
  * should return the point of intersection to the calling function.
  **********************************************************************/
-Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit) {
+Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit, int type) {
   Spheres *head = sph;
   Spheres *re = NULL;
   Point *temp = new Point;
   float closest = 500;
 
   while (head) {
-    float t = intersect_sphere(o, u, head, temp);
+    float t = intersect_sphere(o, u, head, temp, type);
     if (t > 0.00001 && t < closest) {
       closest = t;
       *hit = *temp;
@@ -83,8 +89,8 @@ Spheres *intersect_scene(Point o, Vector u, Spheres *sph, Point *hit) {
  * You need not change this.
  *****************************************************/
 Spheres *add_sphere(Spheres *slist, Point ctr, float rad, float amb[],
-		    float dif[], float spe[], float shine, 
-		    float refl, int sindex) {
+        float dif[], float spe[], float shine, 
+        float refl, float refr, float eta, int sindex) {
   Spheres *new_sphere;
 
   new_sphere = (Spheres *)malloc(sizeof(Spheres));
@@ -102,6 +108,8 @@ Spheres *add_sphere(Spheres *slist, Point ctr, float rad, float amb[],
   (new_sphere->mat_specular)[2] = spe[2];
   new_sphere->mat_shineness = shine;
   new_sphere->reflectance = refl;
+  new_sphere->refraction = refr;
+  new_sphere->eta = eta;
   new_sphere->next = NULL;
 
   if (slist == NULL) { // first object
@@ -113,7 +121,6 @@ Spheres *add_sphere(Spheres *slist, Point ctr, float rad, float amb[],
 
   return slist;
 }
-
 /******************************************
  * computes a sphere normal - done for you
  ******************************************/
