@@ -4,10 +4,14 @@
 #include "global.h"
 #include "sphere.h"
 #include <iostream>
+#include <time.h>
+#include <vector>
 using namespace std;
 //
 // Global variables
 //
+#define PI 3.14159265
+
 extern int win_width;
 extern int win_height;
 
@@ -39,6 +43,8 @@ extern int shadow_on;
 extern int step_max;
 extern int l;
 extern int r;
+extern int f;
+extern int p;
 extern int board;
 
 extern float board_ambient;
@@ -192,6 +198,41 @@ RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point
   return color;
 }
 
+vector<Vector> Generate_diffuse(int n, Vector nor)
+{
+  vector<Vector> re;
+  // float cos_theta = nor.x / sqrt(nor.x * nor.x + nor.z * nor.z);
+  // float sin_theta = nor.z / sqrt(nor.x * nor.x + nor.z * nor.z);
+  for (int i = 0; i < n; i++)
+  {
+    Vector tmp;
+    // float arph = 0;
+    // float cos_arph = -cos(arph * PI / 180);
+    // float sin_arph = sin(arph * PI / 180);
+    // Vector tmp = nor;
+    // tmp.x = nor.x * cos_theta + nor.z * sin_theta;
+    // tmp.y = nor.y;
+    // tmp.z = 0;
+
+    // tmp.x = tmp.x * cos_arph - tmp.y * sin_arph;
+    // tmp.y = tmp.x * sin_arph + tmp.y * cos_arph;
+    // tmp.z = tmp.z;
+
+    // tmp.x = -tmp.x * cos_theta + tmp.z * sin_theta;
+    // tmp.y = tmp.y;
+    // tmp.z = -tmp.x * sin_theta - tmp.z * cos_theta;
+
+    tmp.x = rand()%10;
+    tmp.y = rand()%10;
+    tmp.z = rand()%10;
+    normalize(&tmp);
+    tmp = vec_plus(tmp, nor);
+    normalize(&tmp);
+    re.push_back(tmp);
+  }
+  return re;
+}
+
 /************************************************************************
  * This is the recursive ray tracer - you need to implement this!
  * You should decide what arguments to use.
@@ -210,7 +251,7 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int ty
   color = phong(q, ve, sph, nor, index, hit, type);
   //color_refl = white;
   //color_refr = white;
-
+  srand(time(NULL));
   if (step > 0)
   {
     if (type == 1)
@@ -228,6 +269,21 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int ty
         {
           color_refl = clr_scale(recursive_ray_trace(*hit, refl, sph, step - 1, 1), cur->reflectance);
           color = clr_add(color, color_refl);
+        }
+        if (f)
+        {
+          vector<Vector> v;
+          v.clear();
+          v = Generate_diffuse(diffuse_num, *nor);
+          color_refl.r = color_refl.g = color_refl.b = 0;
+          for (int i = 0; i < diffuse_num; i++)
+          {
+            RGB_float tmp_color = recursive_ray_trace(*hit, v[i], sph, step - 1, 1);
+            color_refl.r += tmp_color.r * cur->mat_diffuse[0];
+            color_refl.g += tmp_color.g * cur->mat_diffuse[1];
+            color_refl.b += tmp_color.b * cur->mat_diffuse[2];
+          }
+          color = clr_add(color, clr_scale(color_refl, 0.2));
         }    
         if (r)
         {
@@ -312,6 +368,27 @@ void ray_trace() {
       //ret_color = background_clr; // just background for now
       //ret_color = phong(eye_pos, ray, scene);
       ret_color = recursive_ray_trace(eye_pos, ray, scene, step_max, 1);
+      if (p)
+      {
+        float s_x = 0.25 * 0.5 * x_grid_size;
+        float s_y = 0.25 * 0.5 * y_grid_size;
+        Point p1 = {cur_pixel_pos.x - s_x, cur_pixel_pos.y - s_y, cur_pixel_pos.z};
+        Vector ray1 = get_vec(eye_pos, p1);
+        ret_color = clr_add(ret_color, recursive_ray_trace(eye_pos, ray1, scene, step_max, 1));
+
+        Point p2 = {cur_pixel_pos.x - s_x, cur_pixel_pos.y + s_y, cur_pixel_pos.z};
+        Vector ray2 = get_vec(eye_pos, p2);
+        ret_color = clr_add(ret_color, recursive_ray_trace(eye_pos, ray2, scene, step_max, 1));
+
+        Point p3 = {cur_pixel_pos.x + s_x, cur_pixel_pos.y - s_y, cur_pixel_pos.z};
+        Vector ray3 = get_vec(eye_pos, p3);
+        ret_color = clr_add(ret_color, recursive_ray_trace(eye_pos, ray3, scene, step_max, 1));
+
+        Point p4 = {cur_pixel_pos.x + s_x, cur_pixel_pos.y + s_y, cur_pixel_pos.z};
+        Vector ray4 = get_vec(eye_pos, p4);
+        ret_color = clr_add(ret_color, recursive_ray_trace(eye_pos, ray4, scene, step_max, 1));
+        ret_color = clr_scale(ret_color, 0.2);
+      }
       // Parallel rays can be cast instead using below
       //
       // ray.x = ray.y = 0;
@@ -319,7 +396,7 @@ void ray_trace() {
       // ret_color = recursive_ray_trace(cur_pixel_pos, ray, 1);
 
 // Checkboard for testing
-RGB_float clr = {float(i/32), 0, float(j/32)};
+//RGB_float clr = {float(i/32), 0, float(j/32)};
 //ret_color = clr;
 
       frame[i][j][0] = GLfloat(ret_color.r);

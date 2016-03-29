@@ -82,11 +82,15 @@ int l = 0;
 
 int r = 0;
 
+int f = 0;
+
+int p = 0;
+
 int board = 0;
 
 Point boardcenter = {0, -2, -5};
 float grid = 0.8;
-float theta = 10;
+float theta = 15;
 
 float board_ambient = 0.3;
 
@@ -239,6 +243,8 @@ int main( int argc, char **argv )
 		if (strcmp(argv[i], "+l") == 0) l = 1;
 		if (strcmp(argv[i], "+c") == 0) board = 1;
 		if (strcmp(argv[i], "+r") == 0) r = 1;
+		if (strcmp(argv[i], "+f") == 0) f = 1;
+		if (strcmp(argv[i], "+p") == 0) p = 1;
 	}
 
 	//
