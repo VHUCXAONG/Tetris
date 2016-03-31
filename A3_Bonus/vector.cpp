@@ -56,7 +56,7 @@ Vector get_vec(Point q, Point p) {
 
 //
 // return point from a point and a vector
-// 
+//
 Point get_point(Point p, Vector q) {
   Point rc;
   rc.x = p.x + q.x;
@@ -78,6 +78,11 @@ void normalize(Vector *u) {
   (*u).z = (*u).z / p;
 }
 
+void inverse(Vectore *u) {
+  (*u).x = -(*u).x;
+  (*u).y = -(*u).y;
+  (*u).z = -(*u).z;
+}
 //
 // return a scaled vector
 //

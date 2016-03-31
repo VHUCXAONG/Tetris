@@ -27,6 +27,8 @@ float intersect_chess(Point o, Vector u, Chess *che, Point *hit) {
   Point b = che->vertex[1];
   Point c = che->vertex[2];
   Vector nor = che->nor;
+  if (vec_dot(u, nor) > 0)
+    inverse(&nor);
   float y = (a.x - o.x) * nor.x + (a.y - o.y) * nor.y + (a.z - o.z) *nor.z;
   float x = u.x * nor.x + u.y * nor.y + u.z * nor.z;
   float t = y / x;

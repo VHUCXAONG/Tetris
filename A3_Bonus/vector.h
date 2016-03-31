@@ -26,6 +26,7 @@ Vector vec_minus(Vector, Vector);
 Vector get_vec(Point, Point);
 Point get_point(Point, Vector);
 void normalize(Vector *);
+void inverse(Vector *);
 Vector vec_scale(Vector, float);
 RGB_float clr_add(RGB_float, RGB_float);
 RGB_float clr_scale(RGB_float, float);

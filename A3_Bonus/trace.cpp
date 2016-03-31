@@ -123,7 +123,6 @@ RGB_float phong(Point q, Vector ve, Chess *che, Vector *nor, int *index, Point *
   {
     cur = intersect_scene(q, ve, che, hit);
     *h = *hit;
-    n = cur->nor;
   }
   else if (type == 1)
   {
@@ -159,10 +158,10 @@ RGB_float phong(Point q, Vector ve, Chess *che, Vector *nor, int *index, Point *
       delete hit;
       return background_clr;
     }
-    n.x = -cur->nor.x;
-    n.y = -cur->nor.y;
-    n.z = -cur->nor.z;
   }
+  n = cur->nor;
+  if (vec_dot(ve, n) > 0)
+    inverse(&n);
   *index = cur->index - 1;
   v = get_vec(*hit, q);
   l = get_vec(*hit, light1);

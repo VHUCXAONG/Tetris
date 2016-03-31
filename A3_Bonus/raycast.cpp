@@ -33,6 +33,14 @@
 // of WIN_X_SIZE and WIN_Y_SIZE in "global.h", along with other
 // global variables
 //
+char f1[] = "./chess_pieces/bishop.smf";
+char f2[] = "./chess_pieces/chess_piece.smf";
+
+Point chess1_vertex[154];
+int chess1_face[304][3];
+
+Point chess2_vertex[250];
+int chess2_face[496][3];
 
 int win_width = WIN_WIDTH;
 int win_height = WIN_HEIGHT;
@@ -227,7 +235,7 @@ int main( int argc, char **argv )
 		printf("./raycast [-u | -d] step_max <options>\n");
 		return -1;
 	}
-
+	Read_smf();
 	if (strcmp(argv[1], "-u") == 0) {  // user defined scene
 		set_up_user_scene();
 	}
