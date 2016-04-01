@@ -260,10 +260,11 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int ty
       {
         refl = Reflect(q, *hit, *nor);
         normalize(&refl);
-        while (*index) 
+        int i = 2 - *index;
+        while (i) 
         {
           cur = cur->next;
-          *index--;
+          i--;
         }
         if (l)
         {

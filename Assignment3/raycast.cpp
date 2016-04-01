@@ -14,7 +14,7 @@
 ***********************************************************/
 
 #include "include/Angel.h"
-
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +24,7 @@
 #include "sphere.h"
 #include "image_util.h"
 #include "scene.h"
-
+using namespace std;
 //
 // Global variables
 //
@@ -235,7 +235,6 @@ int main( int argc, char **argv )
 	}
 
 	step_max = atoi(argv[2]); // maximum level of recursions
-
 	// Optional arguments
 	for(int i = 3; i < argc; i++)
 	{
@@ -253,6 +252,7 @@ int main( int argc, char **argv )
 	// we have used so many global variables and this function is
 	// happy to carry no parameters
 	//
+	//cout << scene->index<<endl;
 	printf("Rendering scene using my fantastic ray tracer ...\n");
 	ray_trace();
 
