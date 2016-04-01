@@ -78,7 +78,7 @@ void normalize(Vector *u) {
   (*u).z = (*u).z / p;
 }
 
-void inverse(Vectore *u) {
+void inverse(Vector *u) {
   (*u).x = -(*u).x;
   (*u).y = -(*u).y;
   (*u).z = -(*u).z;

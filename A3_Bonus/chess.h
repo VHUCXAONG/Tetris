@@ -23,8 +23,9 @@ typedef struct chess {
   struct chess *next;
 } Chess;   // a list of spheres
 
+float intersect_chess(Point o, Vector u, Chess *che, Point *hit);
 // intersect ray with sphere
-Chess *intersect_scene(Point, Vector, Chess *, Point *, int);
+Chess *intersect_scene(Point, Vector, Chess *, Point *);
 // return the unit normal at a point on sphere
 //Vector sphere_normal(Point, Spheres *);
 // add a sphere to the sphere list

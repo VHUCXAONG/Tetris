@@ -3,7 +3,8 @@
 //
 #include "chess.h"
 #include <stdio.h>
-
+#include <iostream>
+using namespace std;
 extern Point light1;
 extern float light1_intensity[3];
 
@@ -26,61 +27,66 @@ extern char* f2;
 void Read_smf()
 {
   FILE *fp;
-  char buf[100], v;
+  char buf[100];
+  char v;
+  int c;
   Point tmp;
-  fp = fopen(f1,"r");
+  fp = fopen("./chess_pieces/chess_piece.smf","r");
   if (fp == NULL)
     cout <<"file open fail"<<endl;
   fgets(buf, 100, fp);
   for (int i = 0; i < 154; i++)
   {
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%f", &tmp.x);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%f", &tmp.y);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%f", &tmp.z);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%f", &tmp.x);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%f", &tmp.y);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%f", &tmp.z);
+    fgets(buf, 100, fp);
     chess1_vertex[i] = tmp;
   }
-  fgets(buf, 100, fp);
   for (int i = 0; i < 304; i++)
   {
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%d", &chess1_face[i][0]);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%d", &chess1_face[i][1]);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%d", &chess1_face[i][2]);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%d", &chess1_face[i][0]);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%d", &chess1_face[i][1]);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%d", &chess1_face[i][2]);
+    fgets(buf, 100, fp);
   }
   fclose(fp);
-
-  fp = fopen(f2,"r");
+  //cout <<chess1_face[303][0]<<" "<<chess1_face[303][1]<<" "<<chess1_face[303][2]<<endl;
+  fp = fopen("./chess_pieces/bishop.smf","r");
   if (fp == NULL)
     cout <<"file open fail"<<endl;
   fgets(buf, 100, fp);
   for (int i = 0; i < 250; i++)
   {
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%f", &tmp.x);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%f", &tmp.y);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%f", &tmp.z);
-    chess1_vertex[i] = tmp;
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%f", &tmp.x);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%f", &tmp.y);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%f", &tmp.z);
+    fgets(buf, 100, fp);
+    chess2_vertex[i] = tmp;
+    //cout <<i<<" "<<tmp.x<<" "<<tmp.y<<" "<<tmp.z<<endl; 
   }
-  fgets(buf, 100, fp);
   for (int i = 0; i < 496; i++)
   {
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%d", &chess1_face[i][0]);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%d", &chess1_face[i][1]);
-    fscanf(fp, "%c", &v);
-    fscanf(fp, "%d", &chess1_face[i][2]);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%d", &chess2_face[i][0]);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%d", &chess2_face[i][1]);
+    c = fscanf(fp, "%c", &v);
+    c = fscanf(fp, "%d", &chess2_face[i][2]);
+    fgets(buf, 100, fp);
   }
   fclose(fp);
 }
@@ -88,12 +94,18 @@ void Read_smf()
 Vector get_nor(Point tmp[3])
 {
   Vector re;
-  re.x = 1;
+  // re.x = 1;
+  // Vector ab = get_vec(tmp[0], tmp[1]);
+  // Vector ac = get_vec(tmp[0], tmp[2]);
   Vector ab = get_vec(tmp[0], tmp[1]);
-  Vector ac = get_vec(tmp[0], tmp[2]);
-  re.z = (ac.x * ab.y - ab.x * ac.y) / (ab.z * ac.y - ac.z * ab.y);
-  re.y = (-ab.x - re.z * ab.z) / ab.y;
+  Vector bc = get_vec(tmp[1], tmp[2]);
+  // re.z = (ac.x * ab.y - ab.x * ac.y) / (ab.z * ac.y - ac.z * ab.y);
+  // re.y = (-ab.x - re.z * ab.z) / ab.y;
+  re.x = (ab.y * bc.z) - (ab.z * bc.y);
+  re.y = -(ab.x * bc.z - ab.z * bc.x);
+  re.z = ab.x * bc.y - ab.y * bc.x;
   normalize(&re);
+  //cout << vec_dot(ab,re)<<" "<<vec_dot(bc,re)<<endl;
   return re;
 }
 
@@ -133,7 +145,13 @@ void set_up_user_scene() {
   for (int i = 0; i < 304; i++)
   {
     for (int j = 0; j < 3; j++)
-      tmp[j] = chess1_vertex[chess1_face[i][j] - 1];
+    {
+      //cout << chess1_face[i][j]<<endl;
+      tmp[j].x = chess1_vertex[chess1_face[i][j] - 1].x * 6 - 4;
+      tmp[j].y = chess1_vertex[chess1_face[i][j] - 1].y * 6 - 3;
+      tmp[j].z = chess1_vertex[chess1_face[i][j] - 1].z * 6 - 8;
+      //cout <<tmp[j].x<<" "<<tmp[j].y<<" "<<tmp[j].z<<endl;
+    }
     nor = get_nor(tmp);
     scene = add_chess(scene, tmp, nor, chess1_ambient, chess1_diffuse, chess1_specular,
       chess1_shineness, chess1_reflectance, chess1_refraction, eta, i+1);
@@ -149,7 +167,11 @@ void set_up_user_scene() {
   for (int i = 0; i < 496; i++)
   {
     for (int j = 0; j < 3; j++)
-      tmp[j] = chess2_vertex[chess2_face[i][j] - 1];
+    {
+      tmp[j].x = chess2_vertex[chess2_face[i][j] - 1].x * 100 + 2;
+      tmp[j].y = chess2_vertex[chess2_face[i][j] - 1].y * 100 - 3;
+      tmp[j].z = chess2_vertex[chess2_face[i][j] - 1].z * 100 - 8;
+    }
     nor = get_nor(tmp);
     scene = add_chess(scene, tmp, nor, chess2_ambient, chess2_diffuse, chess2_specular,
       chess2_shineness, chess2_reflectance, chess2_refraction, eta, i+1+304);

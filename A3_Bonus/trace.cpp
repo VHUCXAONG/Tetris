@@ -94,7 +94,6 @@ bool Refract(Point in, Point hit, Vector n, float eta1, float eta2, Vector *t)
   normalize(&n);
   float e = eta1 / eta2;
   float a = 1 - e * e * (1 - vec_dot(n, v) * vec_dot(n, v));
-  float x = 1 - vec_dot(n, v) * vec_dot(n, v);
   if (a < 0)
     return false;
   float k = e * vec_dot(n, v) - sqrt(a);
@@ -123,6 +122,11 @@ RGB_float phong(Point q, Vector ve, Chess *che, Vector *nor, int *index, Point *
   {
     cur = intersect_scene(q, ve, che, hit);
     *h = *hit;
+    if (cur == NULL)
+    {
+      *index = -1;
+      return white;
+    }
   }
   else if (type == 1)
   {
@@ -140,7 +144,7 @@ RGB_float phong(Point q, Vector ve, Chess *che, Vector *nor, int *index, Point *
         {
           int x1 = trans(*x);
           int y1 = trans(*y);
-          int b_s = 1;
+          // int b_s = 1;
           delete x;
           delete y;
           RGB_float c = ((x1 + y1) % 2)?black:white;
@@ -163,7 +167,10 @@ RGB_float phong(Point q, Vector ve, Chess *che, Vector *nor, int *index, Point *
   if (vec_dot(ve, n) > 0)
     inverse(&n);
   *index = cur->index - 1;
+  //cout<<q.x<<" "<<q.y<<" "<<q.z<<endl;
+  //cout<<hit->x<<" "<<hit->y<<" "<<hit->z<<endl;
   v = get_vec(*hit, q);
+  // cout <<v.x<<" "<<v.y<<" "<<v.z<<endl;
   l = get_vec(*hit, light1);
   r = Reflect(light1, *hit, n);
   d = vec_len(l);
@@ -179,7 +186,6 @@ RGB_float phong(Point q, Vector ve, Chess *che, Vector *nor, int *index, Point *
   color.r = global_ambient[0] * cur->mat_ambient[0] + s * light1_intensity[0] /
      (decay_a + decay_b * (d) + decay_c * (d) * (d)) * (cur->mat_diffuse[0] * vec_dot(n, l) +
      cur->mat_specular[0] * pow(vec_dot(r, v), cur->mat_shineness));
-
   color.g = global_ambient[1] * cur->mat_ambient[1] + s * light1_intensity[1] /
      (decay_a + decay_b * (d) + decay_c * (d) * (d)) * (cur->mat_diffuse[1] * vec_dot(n, l) +
      cur->mat_specular[1] * pow(vec_dot(r, v), cur->mat_shineness));
@@ -221,7 +227,7 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Chess *che, int step, int type
   Chess *cur = che;
   int *index = new int;
   Point *hit = new Point;
-  Point mid, asy;
+  //Point mid, asy;
 	RGB_float color, color_refl, color_refr;
   color = phong(q, ve, che, nor, index, hit, type);
   //color_refl = white;
@@ -235,14 +241,16 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Chess *che, int step, int type
       {
         refl = Reflect(q, *hit, *nor);
         normalize(&refl);
-        while (*index)
+        int i = 304 + 496 -1 -*index;
+        while (i)
         {
           cur = cur->next;
-          *index--;
+          i--;
         }
         if (l)
         {
           color_refl = clr_scale(recursive_ray_trace(*hit, refl, che, step - 1, 1), cur->reflectance);
+          //cout << color_refl.r<<" "<<color_refl.g<<" "<<color_refl.b<<endl;
           color = clr_add(color, color_refl);
         }
         if (f)
@@ -281,6 +289,12 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Chess *che, int step, int type
     }
     else if (type == 2)
     {
+      if (*index == -1)
+      {
+        delete nor;
+        delete hit;
+        return color;
+      }
       refl = Reflect(q, *hit, *nor);
       normalize(&refl);
       if (l)

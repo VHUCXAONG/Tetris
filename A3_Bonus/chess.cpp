@@ -23,28 +23,37 @@ float c = cos(theta * PI / 180);
  * stored in the "hit" variable
  **********************************************************************/
 float intersect_chess(Point o, Vector u, Chess *che, Point *hit) {
-  Point a = che->vertex[0];
-  Point b = che->vertex[1];
-  Point c = che->vertex[2];
+  Point p1 = che->vertex[0];
+  Point p2 = che->vertex[1];
+  Point p3 = che->vertex[2];
+  Point p;
   Vector nor = che->nor;
   if (vec_dot(u, nor) > 0)
     inverse(&nor);
-  float y = (a.x - o.x) * nor.x + (a.y - o.y) * nor.y + (a.z - o.z) *nor.z;
+  float y = (p1.x - o.x) * nor.x + (p1.y - o.y) * nor.y + (p1.z - o.z) *nor.z;
   float x = u.x * nor.x + u.y * nor.y + u.z * nor.z;
   float t = y / x;
+  p.x = o.x + t * u.x;
+  p.y = o.y + t * u.y;
+  p.z = o.z + t * u.z;
 
   hit->x = o.x + t * u.x;
   hit->y = o.y + t * u.y;
   hit->z = o.z + t * u.z;
 
-  Vector AC = get_vec(a, c);
-  Vector AB = get_vec(a, b);
-  Vector AH = get_vec(a, *hit);
+  float alpha = ((p2.y - p3.y)*(p.x - p3.x) + (p3.x - p2.x)*(p.y - p3.y)) /
+        ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+  float beta = ((p3.y - p1.y)*(p.x - p3.x) + (p1.x - p3.x)*(p.y - p3.y)) /
+       ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+  float gamma = 1.0f - alpha - beta;
 
-  float n = (AH.x * AC.y - AH.y * AC.x) / (AB.x * AC.y - AB.y * AC.x);
-  float m = (AH.x - n * AB.x) / AC.x;
-  if (t > 0.0001 && m >= 0 && n >=0 && (m + n) <= 1)
+  //cout << (vec_dot(AH, nor) < 0.0001) <<endl;
+  //float n = ((b.y - c.y) * (hit->x - c.x) + (c.x - b.x) * (hit->y - c.y)) / ((b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y));
+  //float m = ((c.y - a.y) * (hit->x - c.x) + (a.x - c.x) * (hit->y - c.y)) / ((b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y));
+  if (t > 0.0001 && alpha >= 0 && beta >= 0 && gamma >= 0)
+  {
     return t;
+  }
   return -1.0;
 }
 
@@ -58,7 +67,7 @@ bool intersect_board(Point o, Vector u, float *x, float *y, Point *hit)
   hit->z = o.z + t * u.z;
   *x = (o.x + t * u.x - boardcenter.x) / grid;
   *y = (o.y + t * u.y - boardcenter.y) / (s * grid);
-  return ((abs(*x) < 4.0) && (abs(*y) < 4.0));
+  return ((abs(*x) < 30.0) && (abs(*y) < 30.0));
 }
 /*********************************************************************
  * This function returns a pointer to the sphere object that the
@@ -66,15 +75,15 @@ bool intersect_board(Point o, Vector u, float *x, float *y, Point *hit)
  * which arguments to use for the function. For exmaple, note that you
  * should return the point of intersection to the calling function.
  **********************************************************************/
-Spheres *intersect_scene(Point o, Vector u, Chess *che, Point *hit) {
+chess *intersect_scene(Point o, Vector u, Chess *che, Point *hit) {
   Chess *head = che;
   Chess *re = NULL;
   Point *temp = new Point;
-  float closest = 500;
+  float closest = 50000;
 
   while (head)
   {
-    float t = intersect_chess(o, u, head, tmp);
+    float t = intersect_chess(o, u, head, temp);
     if (t > 0.0001 && t <closest)
     {
       closest = t;
@@ -83,7 +92,7 @@ Spheres *intersect_scene(Point o, Vector u, Chess *che, Point *hit) {
     }
     head = head->next;
   }
-  delete tmp;
+  delete temp;
   return re;
 }
 

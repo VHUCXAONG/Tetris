@@ -33,9 +33,6 @@
 // of WIN_X_SIZE and WIN_Y_SIZE in "global.h", along with other
 // global variables
 //
-char f1[] = "./chess_pieces/bishop.smf";
-char f2[] = "./chess_pieces/chess_piece.smf";
-
 Point chess1_vertex[154];
 int chess1_face[304][3];
 
