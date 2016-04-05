@@ -149,7 +149,6 @@ RGB_float phong(Point q, Vector ve, Spheres *sph, Vector *nor, int *index, Point
         {
           int x1 = trans(*x);
           int y1 = trans(*y);
-          int b_s = 1;
           delete x;
           delete y;
           RGB_float c = ((x1 + y1) % 2)?black:white;
@@ -246,11 +245,10 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int ty
   Spheres *cur = sph;
   int *index = new int;
   Point *hit = new Point;
-  Point mid, asy;
 	RGB_float color, color_refl, color_refr;
   color = phong(q, ve, sph, nor, index, hit, type);
   //color_refl = white;
-  //color_refr = white;
+  //color_refr = white; 
   srand(time(NULL));
   if (step > 0)
   {
@@ -284,7 +282,7 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int ty
             color_refl.g += tmp_color.g * cur->mat_diffuse[1];
             color_refl.b += tmp_color.b * cur->mat_diffuse[2];
           }
-          color = clr_add(color, clr_scale(color_refl, 0.2));
+          color = clr_add(color, clr_scale(color_refl, 0.2 * 0.2));
         }    
         if (r)
         {
@@ -334,6 +332,21 @@ RGB_float recursive_ray_trace(Point q, Vector ve, Spheres *sph, int step, int ty
   return color;
 }
 
+void normalize_color(RGB_float *c)
+{
+  float max = -1;
+  if (c->r <= 1 && c->g <= 1 && c->b <= 1)
+    return;
+  if (c->r > max)
+    max = c->r;
+  if (c->g > max)
+    max = c->g;
+  if (c->b > max)
+    max = c->b;
+  c->r /= max;
+  c->g /= max;
+  c->b /= max;
+}
 /*********************************************************************
  * This function traverses all the pixels and cast rays. It calls the
  * recursive ray tracer and assign return color to frame
@@ -390,6 +403,7 @@ void ray_trace() {
         ret_color = clr_add(ret_color, recursive_ray_trace(eye_pos, ray4, scene, step_max, 1));
         ret_color = clr_scale(ret_color, 0.2);
       }
+      //normalize_color(&ret_color);
       // Parallel rays can be cast instead using below
       //
       // ray.x = ray.y = 0;

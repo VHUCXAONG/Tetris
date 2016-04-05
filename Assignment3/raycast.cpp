@@ -255,10 +255,10 @@ int main( int argc, char **argv )
 	//cout << scene->index<<endl;
 	printf("Rendering scene using my fantastic ray tracer ...\n");
 	ray_trace();
-
+	
 	// we want to make sure that intensity values are normalized
 	histogram_normalization();
-
+	//save_image();
 	// Show the result in glut via texture mapping
 	glutInit( &argc, argv );
 	glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE );
@@ -270,5 +270,6 @@ int main( int argc, char **argv )
 	glutDisplayFunc( display );
 	glutKeyboardFunc( keyboard );
 	glutMainLoop();
+	
 	return 0;
 }

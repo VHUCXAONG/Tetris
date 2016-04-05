@@ -1,1 +1,13 @@
 CMPT361 A3
+
+All features are completed as required.
+
+Refraction is only available for user scene, which means you have to use -u to test it instead of -d.
+
+Test commands:
+./raycast [–u | –d] 0
+./raycast [–u | –d] 0 +s
+./raycast [–u | –d] step_max +s +l +c
+./raycast –u step_max +s +l +r +c
+./raycast –u step_max +s +l +r +c +f
+./raycast –u step_max +s +l +r +f +c +p
