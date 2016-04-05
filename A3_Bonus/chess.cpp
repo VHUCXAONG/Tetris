@@ -67,7 +67,7 @@ bool intersect_board(Point o, Vector u, float *x, float *y, Point *hit)
   hit->z = o.z + t * u.z;
   *x = (o.x + t * u.x - boardcenter.x) / grid;
   *y = (o.y + t * u.y - boardcenter.y) / (s * grid);
-  return ((abs(*x) < 30.0) && (abs(*y) < 30.0));
+  return ((abs(*x) < 100.0) && (abs(*y) < 100.0));
 }
 /*********************************************************************
  * This function returns a pointer to the sphere object that the
